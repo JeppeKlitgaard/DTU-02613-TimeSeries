@@ -43,18 +43,39 @@
 #let y = $vv(y)$
 #let y_pred = $hat(#y)$
 #let ε = $vv(ϵ)$
+#let W = $mm(W)$
 
 = Assignment 1
 
 == Plot Data
 
+We are given a tabular data set "`BIL54`" describing the total number of registered motor driven vehicles in Denmark. The data given as a time series with monthly observations starting in January 2018.
+
+We divide the data set into a _training set_ containing data from January 2018 to December 2023, and a _test set_ containing data from January 2024 to December 2024.
+
 === Construct time variable
+
+The data set is indexed by an `ISO8601` date-time column, which we transform into a floating point time variable, $x$ as follows:
+
+$
+  x = "Year" + ("Month")/12 wide wide "Month" &∈ {0, 1, …, 11}\
+                                       "Year" &∈ {2018, 2019, …, 2024}\
+$
+
+When referring to a vector of time values, we will follow the vector notation $vv(x)$. Other vectors are denoted similarly, while matrices are denoted with a double underline, $mm(X)$.
+
+It is important to distinguish between the time-like vector-valued variable $vv(x)$ and the design matrix $mm(X)$, which will be introduced later.
 
 === Plotting observations
 
-#image("output/plot_observations.png")
+Using only the training data, we plot the total number of registered vehicles in Denmark as a function of time in @fig:plot_observations.
 
-== Linear Trend Model
+#figure(
+  image("output/plot_observations.png"),
+  caption: [Training data describing the total number of registered vehicles in Denmark as a function of time.]
+) <fig:plot_observations>
+
+== Linear Trend Model <sec:2_linear_trend_model>
 
 We are given the General Linear Model (GLM) in sloppy notation:
 $
@@ -63,7 +84,7 @@ $ <GLM>
 
 === Matrix Form
 
-We rewrite @GLM as a matrix:
+We immediately rewrite @GLM as a matrix, observing the tensor notation outlined previously:
 
 $
   #y = #X #θ + #ε
@@ -120,17 +141,25 @@ $
   )
 $
 
-=== Parameter Estimation
+=== Parameter Estimation <sec:2_2_paramater_estimation>
 
-We can estimate the parameters $#θ$ by deriving the _normal equations_:
+We can estimate the parameters $#θ$ leveraging the _normal equations_.
+
+This is done by minimizing the _residual sum of squares_ (RSS) between the observations and the model predictions, that is:
 
 $
-  mref("GLM_matrix") quad ⇒ quad
-  #X^T #y = #X^T #X #θ_pred quad ⇒ quad
+  #θ_pred = limits("argmin")_θ norm(#y - #X #θ)^2
+$ <theta_pred_optimisation>
+
+We state without proof that the solution to the above optimization problem is given by the _normal equations_:
+
+$
+  mref("theta_pred_optimisation") quad ⇒ quad
+  #X^T #y = #X^T #X #θ_pred quad ⇔ quad
   #θ_pred = (#X^T #X)^(-1) #X^T #y
 $ <theta_estimation>
 
-Where $#X$ has assumed to be invertible.
+Where $#X$ is assumed to be invertible.
 
 We additionally consider the standard errors of the parameter estimates, $#θ_pred$.
 
@@ -179,7 +208,7 @@ $
   &= (#X^T #X)^(-1) #X^T "Var"[#ε #ε^T] #X ((#X^T #X)^T)^(-1)\
   &= (#X^T #X)^(-1) #X^T σ^2 #X (#X^T #X)^(-1)    wide wide wide wide && #ε ∼ vv(𝒩)(0, σ^2) \
   &= σ^2 (#X^T #X)^(-1) \
-$
+$ <eq:cov_theta_pred>
 
 Where we understand the variances of the predicted variables to be
 the diagonal elements of the covariance matrix:
@@ -192,14 +221,20 @@ $
 Which gives the following standard errors for the parameter estimates:
 
 $
-  σ_(hat(θ_i)) = sqrt("Var"[hat(θ_i)]) = sqrt(σ^2 (#X^T #X)^(-1)_(i)) wide wide i ∈ {1, 2}
+  σ_(hat(θ)_i) = sqrt("Var"[hat(θ)_i]) = sqrt(σ^2 (#X^T #X)^(-1)_(i)) wide wide i ∈ {1, 2}
 $
+
+Where $σ$ is calculated using the _residual sum of squares_ (RSS) with $N$ and $p$ denoting the number of rows and parameters in the design matrix #X respectively:
+
+$
+  σ = norm(#y - #X #θ_pred)^2/sqrt(N - p)
+$ <eq:sigma>
 
 Computing these for the entire training dataset gives:
 
 $
-  hat(θ_1) &= (-110360 ± 60) × 10^3\
-  hat(θ_2) &= (3593.6 ± 1.8) × 10^3\
+  hat(θ)_1 &= (-110 ± 4) × 10^6\
+  hat(θ)_2 &= (56.1 ± 1.8) × 10^3\
 $
 
 Using these predicted parameters,
@@ -208,10 +243,10 @@ using the General Linear Model as seen in @fig:plot_observations_predicted.
 
 #figure(
   image("output/plot_observations_predicted.png"),
-  caption: [Estimation of vehicle registrations using the General Linear Model.]
+  caption: [Estimation of vehicle registrations using a Linear Trend Model.]
 ) <fig:plot_observations_predicted>
 
-=== Prediction
+=== Prediction <sec:2_3_prediction>
 
 We now wish to predict future vehicle registrations using our simple model.
 From @y_pred, we see that doing so simply requires the construction of an appropriate
@@ -229,7 +264,7 @@ Where $i$ indexes the rows of the design matrix.
 Carrying out the forecasting as described by @y_pred
 along with appropriate estimation of the confidence interval of our prediction,
 we obtain @table:forecast_2_3.
-It should be noted that the estimation of the confidence interval valid only
+It should be noted that the estimation of the confidence interval is valid only
 in the case where the observations are described by the General Linear Model.
 
 #let forecast_2_3 = csv("output/forecast.csv")
@@ -263,7 +298,7 @@ which can be understood by considering the modelling domain.
 It is reasonable to assume that the number of registered vehicles will
 be influenced by market conditions,
 such as government subsidies, registration fees, and taxation schemes.
-Additionally we would expect supply chain disruptions to have strongly influence
+Additionally, we would expect supply chain disruptions to have strongly influence
 the contemporary pricing and availability of vehicles.
 
 A better model would likely incorporate these factors.
@@ -289,7 +324,10 @@ $
   𝔼[vv(r)] = -8739
 $
 
-As such, we conclude that the model is not appropriate to describe the data.
+It should be noted, that the sum of the residuals is relatively close to zero,
+which is by construction as can be seen in @sec:2_2_paramater_estimation.
+
+We conclude that the model is not appropriate to describe the data.
 
 #figure(
   image("output/plot_2_6_forecast_residuals.png"),
@@ -297,5 +335,189 @@ As such, we conclude that the model is not appropriate to describe the data.
     Residual analysis on prediction and forecasting of total vehicle registrations in Denmark.
     Dashed black line delineates the transition from prediction to forecasting.]
 ) <fig:plot_2_6_forecast_residuals>
+
+== WLS - Local Linear Trend Model
+
+In order to mitigate some of the issues observed in the Linear Trend Model of @sec:2_linear_trend_model, we propose a _Weighted Least Squares_ model with local weights.
+
+That is, more recent observations are weighted higher than older observations.
+
+This is facilitated by repurposing the variance-covariance matrix of the residuals. For Ordinary Least Squares (OLS), we assumed the residuals to be modelled as $#ε ∼ vv(𝒩)(0, σ^2)$. That is, we have imposed an assumption of _homoscedasticity_ on the residuals #ε. In Weighted Least Squares (WLS) modelling, we relax this assumption and instead consider the variances of the residuals to be _heterogeneous_ – that is, the residuals are _heteroscedastic_:
+
+$
+  #ε ∼ vv(𝒩)(0, vv(σ)^2)
+$
+
+For Global Weighted Least Squares, one would ideally know the variances of the residuals a priori and simply weigh the residuals by the inverse of the variances.
+
+We instead choose to _exploit_ the Weighted Least Squares model to introduce _locality_ in the estimation by letting the covariances of the residuals be modelled by $σ^2 #W$. We recall that the solution to the OLS problem (@theta_estimation) was obtained by optimization of the _residual sum of squares_ (RSS) between the observations and the model predictions.
+If we choose to weigh the residuals by their recency, we able to obtain an
+estimator that values recent information more highly than older information.
+
+Referring to @Madsen_2008[p.~38-39], we state without proof that the _normal equations_ for the WLS model are given by:
+
+$
+  (#X^T #W #X) #θ_pred = #X^T #W #y
+$
+
+Note that we have changed the notation slightly, denoting the weight matrix as #W rather than perverting the sigma as is done in @Madsen_2008.
+That is, we have made the substitution $#W = mm(Σ)^(-1)$.
+
+Assuming invertibility of $#X^T #W #X$, we obtain the parameter estimator:
+$
+  #θ_pred = (#X^T #W #X)^(-1) #X^T #W #y
+$ <eq:3_theta_estimation>
+
+We again follow the proof given in @sec:2_2_paramater_estimation, though noting that the variances of the residuals are now given by $𝔼[#ε #ε^T] = σ^2 #W$. As such, @eq:cov_theta_pred becomes:
+
+$
+  "Cov"[#θ_pred] = σ^2 (#X^T #W #X)^(-1)
+$
+
+A typical choice of the weight matrix would be to have exponentially decaying weights:
+
+$
+  #W = sum_(i=1)^N sum_(j=1)^N δ_(i j) λ^(N-i)
+  wide wide δ_(i j) =
+  cases(
+    1 quad & i = j\
+    0 quad & i ≠ j
+  )
+$
+
+Where $δ_(i j)$ is _Kroneckers delta_, $λ$ is the _forgetting factor_, and $N$ denotes the dimension of #y.
+
+=== Variance-Covariance and Weight Matrices
+
+Encouraging the reader to grit their teeth we summarise the 'variance-covariance' matrices for the OLS and WLS models as follows:
+
+$
+  mm(Σ) &= σ^2 mm(𝕀) wide && "OLS"\
+  #W &= σ^2"diag"(vv(λ)) wide vv(λ) = mat(delim: "[", λ^(N-1), λ^(N-2), … , λ^0) wide && "WLS"\
+$
+
+Stating these more explicitly, they become:
+$
+  mm(Σ) &= mat(delim: "[",
+  σ^2;
+  ,⋱,;
+  ,,σ^2;
+  ) wide && "OLS"\
+
+  #W &= mat(delim: "[",
+  σ^2 λ^(N-1);
+  ,σ^2 λ^(N-2);
+  ,,⋱,;
+  ,,,σ^2 λ^1;
+  ,,,,σ^2;
+  ) wide && "WLS"\
+$
+
+For the rest of the analysis, we will consider the _forgetting factor_ $λ ≡ 0.9$.
+
+=== Weighting Regimen
+
+Considering 72 time steps, we visualise the decay of the weights in @fig:plot_3_2_weights
+
+#figure(
+  image("output/plot_3_2_weights.png"),
+  caption: [Decay of weights in the Weighted Least Squares model for $λ≡0.9$.]
+) <fig:plot_3_2_weights>
+
+=== Sums of weights
+
+We find that the sum of the weights is given by:
+
+$
+  sum_(i=1)^N λ^(N-i) = (1 - λ^N)/(1 - λ)
+$
+
+For the limit $N → ∞$ and $λ=0.9$, we find:
+
+$
+  lim_(N → ∞) sum_(i=1)^N λ^(N-i) = 10
+$
+
+We consider $N=72$ and find the truncation gives:
+
+$
+  sum_(i=1)^72 λ^(72-i) ≈ 9.995 wide "WLS"
+$
+
+The corresponding sum for the OLS model is clearly not bounded and just becomes:
+
+$
+  sum_(i=1)^N 1 = N wide "OLS"
+$
+
+For $N=72$, this simply becomes $72$.
+
+=== Parameter Estimation
+
+We can now estimate the parameters of the WLS model using @eq:3_theta_estimation:
+
+$
+  hat(θ)_1 &= (-1159200 ± 600) × 10^2\
+  hat(θ)_2 &= (5173.5 ± 2.6) × 10^2\
+$
+
+Where the standard error is computed using Equation (3.43) in @Madsen_2008[p.~39].
+
+=== Forecasting
+
+We now perform a 12 month forecast using the WLS model in similar to fashion
+to the one carried out in @sec:2_3_prediction, as seen in @fig:plot_3_5_forecast.
+
+#figure(
+  image("output/plot_3_5_forecast_wls_ols.png"),
+  caption: [Comparison of the OLS and WLS ($λ=0.9$) forecasts
+  of total number of registered vehicles in Denmark.]
+) <fig:plot_3_5_forecast>
+
+It should be noted that the standard error estimate used in the WLS model has
+been corrected with respect to @eq:sigma for the truncating effect of the weights by calculating the
+degrees of freedom using the _total memory_, $T$ of the model instead:
+
+$
+  σ = norm(#y - #X #θ_pred)^2/sqrt(T - p)
+$ <eq:sigma_wls>
+
+Where the _total memory_ is given by the sum of the weights:
+
+$
+  T = sum_(i=1)^N λ^(N-i) = (1 - λ^N)/(1 - λ)
+$
+
+For $λ<1$ and $N∈ℤ_+$ we observe that $T < N$, which agrees with intuition – a model with less memory _should_ be less _confident_ in its predictions,
+all other things being equal.
+
+Even with this correction reducing the model confidence,
+we find an improved prediction and associated prediction interval
+as seen in @fig:plot_3_5_forecast. This can be understood as the sum of squared residuals being reduced by the weighting scheme.
+
+While the prediction does exhibit an improved fit to the test data
+when compared to the prediction carried out with an OLS model,
+it remains important to note that the model
+may not generally be expected to forecast well, particularly in the event of
+drastic changes in legislation or governance of motor driven vehicles.
+
+Given a choice between the two models, short-term forecasts would be better served by the WLS model. It is not possible to confidently state which model would be preferable for long-term forecasting.
+
+=== Different forgetting factors
+
+Our choice of $λ=0.9$ was somewhat arbitrary and wholly unjustified.
+In order to gauge which choice of forgetting factor may best fit out test data,
+we run the WLS analysis repeatedly. It should be noted that the choice of forgetting factor will inevitably be a qualitative matter and there is no guarantee that the $λ$ that minimises the sum of squared residuals is necessarily a good or sensible choice for prediction for data sets that are not the current test set.
+
+The outcome of the analysis can be seen in @fig:plot_3_6_forgetting_factors, where we have omitted the confidence interval estimates for clarity.
+
+#figure(
+  image("output/plot_3_6_forgetting_factors.png"),
+  caption: [12 month forecasts of total number of registered vehicles in Denmark using Local Weighted Least Squares with a variety of forgetting factors.]
+) <fig:plot_3_6_forgetting_factors>
+
+We find that $λ=0.9$ is a reasonable choice for the test data set, though it is not necessarily the best choice for other data sets.
+
+== Recursive Estimation and Optimization of $λ$
 
 #bibliography("report.bib")
