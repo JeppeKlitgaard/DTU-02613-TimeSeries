@@ -1,4 +1,10 @@
 #import "@preview/physica:0.9.4": super-T-as-transpose
+#import "@preview/codly:1.2.0": *
+#import "@preview/codly-languages:0.1.1": *
+
+#show: codly-init.with()
+#codly(languages: codly-languages)
+
 
 #set heading(numbering: "A.1.1")
 #set math.equation(numbering: "(1)", supplement: [Eq.])
@@ -519,5 +525,95 @@ The outcome of the analysis can be seen in @fig:plot_3_6_forgetting_factors, whe
 We find that $λ=0.9$ is a reasonable choice for the test data set, though it is not necessarily the best choice for other data sets.
 
 == Recursive Estimation and Optimization of $λ$
+
+The OLS problem whose parameters may be obtained as given by @theta_estimation can be reformulated as an _iterative_ problem:
+
+For a timestep $t$ we find from @theta_estimation:
+
+$
+  #θ_pred _t &= (#X _t^T #X _t)^(-1) #X _t^T #y _t
+  &= mm(R)^(-1)_t vv(h)_t
+$ <eq:4_1_theta_pred>
+
+Having used the definitions:
+$
+  mm(R) _t &≡ #X _t^T #X _t &&= sum_(i=1)^t vv(x)_i vv(x)_i^T\
+  vv(h) _t &≡ #X _t^T #y _t &&= sum_(i=1)^t vv(x)_i y_i
+$ <eq:4_1_R_h_sums>
+
+=== Update Equations
+
+Inspection of @eq:4_1_R_h_sums readily reveals the objects at timestep $t$ as a function of their values at timestep $t-1$:
+$
+  mm(R) _t &= mm(R) _(t-1) + vv(x)_t vv(x)_t^T &&= sum_(i=1)^(t-1) vv(x)_i vv(x)_i^T + vv(x)_t vv(x)_t^T\
+  vv(h) _t &= vv(h) _(t-1) + vv(x)_t y_t &&= sum_(i=1)^(t-1) vv(x)_i y_i + vv(x)_t y_t
+$ <eq:4_1_R_h_recursive>
+
+We can then rewrite @eq:4_1_theta_pred as:
+
+$
+  #θ_pred _t = #θ_pred _(t-1) + mm(R)^(-1)_t vv(x)_t (y_t - vv(x)_t^T #θ_pred _(t-1))
+$ <eq:4_1_theta_pred_recursive>
+
+Somewhat less neatly typeset, we also include the update equations as a pen-and-paper scan to complete the assignment objective.
+
+#figure(
+  image("/Jeppe/jeppe_4_1_1.jpg"),
+  caption: [Update equations on pen and paper by Jeppe Klitgaard (s250250).]
+) <fig:plot_4_1_recursive_estimation>
+
+#figure(
+  image("/Jeppe/jeppe_4_1_2.jpg", width: 65%),
+  caption: [Calculations of $R_1$ and $R_2$ on pen and paper by Jeppe Klitgaard (s250250).]
+) <fig:plot_4_1_recursive_estimation>
+
+TODO: Pen and paper Yunis
+
+=== Computational Implementation
+
+We implement the Recursive Least Squares as given in @eq:4_1_R_h_recursive @eq:4_1_theta_pred_recursive in Python as follows:
+
+```python
+def iterate(R, theta, x_t, y_t):
+    R_t = R + x_t @ x_t.T
+    theta_t = theta + (inv(R_t) @ x_t) * (y_t - x_t.T @ theta)
+
+    return R_t, theta_t
+```
+
+Using initial conditions $mm(R)_0 = 0.1 ⋅ mm(𝕀)$ and $vv(θ)_0 = 0$, we iterate over the data set to $t'=t-3$ (not inclusive) and obtain the parameter estimates #θ_pred. These are presented in @fig:plot_4_2_rls_parameters.
+
+#figure(
+  image("output/plot_4_2_rls_parameters.png"),
+  caption: [Parameter estimates obtained using Recursive Least Squares.]
+) <fig:plot_4_2_rls_parameters>
+
+We find that the initial parameter estimates are very poor,
+but gradually improve as more data is included in the estimation.
+Notably, we can see that as the slope, $θ_2$, increases as part of the iterative correction, the intercept, $θ_1$, shifts down.
+
+While the matrix operations in @eq:4_1_theta_pred_recursive are somewhat opaque, careful inspection of the parameter update equation reveals a residual term $y_t - vv(x)_t^T #θ_pred _(t-1)$ that arises by modelling the current observation with the previous parameter estimate.
+
+The term $mm(R)_t^(-1) vv(x)_t$ then scales the residual appropriately, where we understand $mm(R)$ to take the role of $#X^T #X$ in the OLS model.
+Essentially, this captures the relationship between the parameters.
+
+=== Calculation and Comparison of Parameter Estimates
+
+We now calculate the estimates $#θ_pred _N$.
+The meaning of $#θ_pred _N$ is ambiguous in the task.
+We interpret it to mean $hat(θ) _1$ and $hat(θ) _2$ at time $t'=t$.
+
+This gives us:
+
+#figure(
+  table(
+    columns: 3,
+    align: center,
+    table.header([*Model*], [*$hat(θ)_1$*], [*$hat(θ)_2$*]),
+    [*OLS*], [$-110.365428 × 10^6$], [$56.14 × 10^3$],
+    [*RLS*], [$-58.32 × 10^3$], [$1.568 × 10^3$],
+  ),
+  caption: [Comparison of parameter estimates obtained using Ordinary Least Squares (OLS) and Recursive Least Squares (RLS).]
+) <table:4_3_comparison_parameters>
 
 #bibliography("report.bib")
