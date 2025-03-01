@@ -558,12 +558,12 @@ $ <eq:4_1_theta_pred_recursive>
 Somewhat less neatly typeset, we also include the update equations as a pen-and-paper scan to complete the assignment objective.
 
 #figure(
-  image("/Jeppe/jeppe_4_1_1.jpg"),
+  image("jeppe_4_1_1.jpg"),
   caption: [Update equations on pen and paper by Jeppe Klitgaard (s250250).]
 ) <fig:plot_4_1_recursive_estimation>
 
 #figure(
-  image("/Jeppe/jeppe_4_1_2.jpg", width: 65%),
+  image("jeppe_4_1_2.jpg", width: 65%),
   caption: [Calculations of $R_1$ and $R_2$ on pen and paper by Jeppe Klitgaard (s250250).]
 ) <fig:plot_4_1_recursive_estimation>
 
