@@ -835,7 +835,7 @@ From @fig:plot_4_6_rmsek, we observe that the optimal forgetting factor for the 
 Taking note of the shape of the curves in @fig:plot_4_6_rmsek, we can validate our speculation above. For short prediction horizons, the optimal forgetting factor is lower, while for longer prediction horizons, the optimal forgetting factor is higher.
 
 === Predictions Using RLS and Other Models
-<sec:4_6_optimal_forgetting>
+<sec:4_7_predictions_model_comparison>
 
 #figure(
   image("output/plot_4_7_ols_ewls_rlsf_comparison.png"),
@@ -844,13 +844,13 @@ Taking note of the shape of the curves in @fig:plot_4_6_rmsek, we can validate o
   ]
 ) <fig:plot_4_7_ols_ewls_rlsf_comparison>
 
-Here the weight factor $\lambda=0.57$ is chosen loosely based on the previous @fig:plot_4_6_rmsek, as an estimated good value (in the middle of optimal values for $k \in \set{1,...,11}$). Therefore, it is not surprising that for $k=12$ the RLS-F (RLS with forgetting) does perform very poorly. For the chosen time horizon, the RLS-F model would perform best for $\lambda \to 1$, at which point it basically becomes an OLS model, better at predicting more global trends.
+Here the weight factor $λ=0.57$ is chosen loosely based on the previous @fig:plot_4_6_rmsek, as an estimated good value (in the middle of optimal values for $k \in {1,...,11}$). Therefore, it is not surprising that for $k=12$ the RLS-F (RLS with forgetting) does perform very poorly. For the chosen time horizon, the RLS-F model would perform best for $λ \to 1$, at which point it basically becomes an OLS model, better at predicting more global trends.
 
 In this szenario the E-WLS (exponential/local WLS) model performs best, simply by visual analysis. Yet, all models perform quite poorly, not finding a good compromise between local trends and global trend.
-This could be overcome by different choices of $\lambda$. However, the general notion of "forgetting" models (such as E-WLS and RLS-F) being better at predicting short term horizons (e.g. $k \in \set{1,2,3,4}$) remains. Nonetheless, this is highly dependent on noise and variance in the given time-series.
+This could be overcome by different choices of $λ$. However, the general notion of "forgetting" models (such as E-WLS and RLS-F) being better at predicting short term horizons (e.g. $k \in {1,2,3,4}$) remains. Nonetheless, this is highly dependent on noise and variance in the given time-series.
 
-In the short following exploration, we investigate superficially, whether the choice of $\lambda$ fundamentally changes that notion or just marginally improves the models predictive power.
-This time, we consider a range for $\lambda$, where it does not have its absolute minimum, but given @fig:plot_4_6_rmsek for $k=12$, the RMSE is close to minimal values.
+In the short following exploration, we investigate superficially, whether the choice of $λ$ fundamentally changes that notion or just marginally improves the models predictive power.
+This time, we consider a range for $λ$, where it does not have its absolute minimum, but given @fig:plot_4_6_rmsek for $k=12$, the RMSE is close to minimal values.
 
 #figure(
   image("output/plot_4_7_ols_ewls_rlsf_lambda_comparison.png"),
@@ -859,7 +859,60 @@ This time, we consider a range for $\lambda$, where it does not have its absolut
   ]
 ) <fig:plot_4_7_ols_ewls_rlsf_lambda_comparison>
 
-As we can see in @fig:plot_4_7_ols_ewls_rlsf_lambda_comparison, the RLS-F with high "forgetting" (low $\lambda$) does capture extremely short-term trends; in fact, goes opposite the global trend. For higher $\lambda$ it approximates the WLS model, for $\lambda > 0.87$ (according to @fig:plot_4_6_rmsek) it will approximate the OLS solution.
-Overall, the predictive power does improve for certain parameter $\lambda$, but only for select time horizons $k \in \set{1,2}$.
+As we can see in @fig:plot_4_7_ols_ewls_rlsf_lambda_comparison, the RLS-F with high "forgetting" (low $λ$) does capture extremely short-term trends; in fact, goes opposite the global trend. For higher $λ$ it approximates the WLS model, for $λ > 0.87$ (according to @fig:plot_4_6_rmsek) it will approximate the OLS solution.
+Overall, the predictive power does improve for certain parameter $λ$, but only for select time horizons $k \in {1,2}$.
+
+
+
+=== Reflexions on time adaptive models
+<sec:4_8_reflexions>
+
+
+1. **Overfitting VS Underfitting**
+
+The problem with these simple linear models is definitely underfitting. All constructed models performed somewhat poorly in explaining the data and predicting it.
+There would be mainly 3 knobs to consider:
+- increase the amount of parameters for the model (thus making it a multivariate linear regression; resulting in hyperplanes as predictors) - the dataset has more to offer
+- increase the model complexity to for example polynomial models - however, these come with different problems (especially for time-series; asymptotic behaviour towards boundries)
+- hyperparameter tuning of $λ$ or even the structure of the entire weight matrix $Σ$
+
+
+2. **Test Set Challenges**
+
+There are challenges in time-series due to covariance and independence assumptions. So far, each observation is treated as an independent random variable (with the exception of an exponential weight matrix, which somewhat introduces the notion of more recent samples being more important than older ones). 
+
+    However, time series can present trend-changes (as is the example here) or even seasonality behaviours. This is different from a dataset, that simply maps one variable or event to another, where order of the events is not relevant.
+    
+    Thus, the choice of split of a test da can dramatically impact the model's predictive capability. The time frame chosen can include of not include trend changes, that may or may not be present in the other split of data.
+
+    One way to handle this would be by cross-validation. A common method, that would also be applicable to time-series is an adjusted K-Fold cross-validation. Basically, creating different models by sequentially leaving out some parts of the training data and then weighting by the confidence of each model. Bootstrapping is another famous method but due to its nature not applicable.
+
+
+3. **Recursive Estimation as a Saviour?**
+
+Actually the step-wise prediction (for only the test dataset though) was supperior to global model parameters.
+Yet, it was not applicable or helpful for **actual** prediction, as the time horizon to predict into the future may vary and the last parameter estimation cuts of at the very end of the training dataset. Hence it is does not have the advantages of continually updating parameters any longer.
+
+    However, in general the RLS models suffer from severe 'burn-in', initial guess uncertainty and more delicate hyperparameter tuning. Additionally, they are more computationally expensive.
+    These properties make then not a good fit so far, but it might depend on the origin of the time series.
+
+
+4. **Additional adaptive estimation techniques**
+
+Some ideas for adaptive (maybe recursive) estimation on time series:
+- Bayesian models, taking new information to update likelihood and posterior; would also allow for a good initial estimate depending on the origin of the data for the prior distribution
+- momentum models; taking sudden large jumps in time-series as a penalty to a weight, not to update much -> would be great for noisy time series
+- averaging different weighted models to capture notions of local trend changes and reversion to a global trend
+- dynamic weight models; adjust the size of a WLS dynamically/recursively, based on the variance, noise or momentum of data
+- recurrent neural-network based models -> most often a good predictor but hard to interpret or modify without continuous re-training (very computationally expensive)
+- regularized models: Ridge-regression (L2) or ISTA (L1), the latter does not work well on most time-series because the L1 norm penalizes mostly "edges"
+
+
+5. **Additional Comments**
+
+- RLS models are quite the pain in the a** to get right, especially choosing initial values for $θ$, $R_t$ and $λ$
+- a huge pitfall is to think that: modelling a time series, that is (visually) very obviously not showing a linear behavior, with a simple linear model...is a good idea
+- as for the initial description and visual analysis, it became apparent that there are significant trend changes present; so much in fact, that one could possibly also just take the last few data points to predict and save oneself all the hustle - a wiser choise of train/test split would significantly improve the models
+
 
 #bibliography("report.bib")
