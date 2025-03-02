@@ -842,7 +842,7 @@ Taking note of the shape of the curves in @fig:plot_4_6_rmsek, we can validate o
   caption: [
     Prediction of total car sales, compared by model (OLS, WLS, RLS) for horizon $k=12$ and forgetting factor $λ=0.57$.
   ]
-) <fig:plot_4_6_rmsek>
+) <fig:plot_4_7_ols_ewls_rlsf_comparison>
 
 Here the weight factor $\lambda=0.57$ is chosen loosely based on the previous @fig:plot_4_6_rmsek, as an estimated good value (in the middle of optimal values for $k \in \set{1,...,11}$). Therefore, it is not surprising that for $k=12$ the RLS-F (RLS with forgetting) does perform very poorly. For the chosen time horizon, the RLS-F model would perform best for $\lambda \to 1$, at which point it basically becomes an OLS model, better at predicting more global trends.
 
@@ -852,6 +852,14 @@ This could be overcome by different choices of $\lambda$. However, the general n
 In the short following exploration, we investigate superficially, whether the choice of $\lambda$ fundamentally changes that notion or just marginally improves the models predictive power.
 This time, we consider a range for $\lambda$, where it does not have its absolute minimum, but given @fig:plot_4_6_rmsek for $k=12$, the RMSE is close to minimal values.
 
+#figure(
+  image("output/plot_4_7_ols_ewls_rlsf_lambda_comparison.png"),
+  caption: [
+    Zoomed in prediction graph of total car sales, compared by model (OLS, WLS, RLS) for horizon $k=12$ and forgetting factor $λ \in [0.5, 0.75]$.
+  ]
+) <fig:plot_4_7_ols_ewls_rlsf_lambda_comparison>
 
+As we can see in @fig:plot_4_7_ols_ewls_rlsf_lambda_comparison, the RLS-F with high "forgetting" (low $\lambda$) does capture extremely short-term trends; in fact, goes opposite the global trend. For higher $\lambda$ it approximates the WLS model, for $\lambda > 0.87$ (according to @fig:plot_4_6_rmsek) it will approximate the OLS solution.
+Overall, the predictive power does improve for certain parameter $\lambda$, but only for select time horizons $k \in \set{1,2}$.
 
 #bibliography("report.bib")

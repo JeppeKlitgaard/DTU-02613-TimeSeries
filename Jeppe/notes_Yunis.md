@@ -64,6 +64,11 @@ I uploaded the PDF into the folder
 ### A4.2
 I actually did some more explanation for the "intuitive" equations, maybe you can copy in some of it
 
+### A4.3
+Figure 15: 
+    1. where is the OLS curve?
+    2. Is that a point-wise/step-wise RLS estimate?
+
 ### A4.4
 Maybe copy in my multi-line plot with the vanishing regression lines; I think its actually a good plot to illustrate burn in and the effect of recursive forgetting
 
