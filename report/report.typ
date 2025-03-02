@@ -835,6 +835,22 @@ From @fig:plot_4_6_rmsek, we observe that the optimal forgetting factor for the 
 Taking note of the shape of the curves in @fig:plot_4_6_rmsek, we can validate our speculation above. For short prediction horizons, the optimal forgetting factor is lower, while for longer prediction horizons, the optimal forgetting factor is higher.
 
 === Predictions Using RLS and Other Models
+<sec:4_6_optimal_forgetting>
+
+#figure(
+  image("output/plot_4_7_ols_ewls_rlsf_comparison.png"),
+  caption: [
+    Prediction of total car sales, compared by model (OLS, WLS, RLS) for horizon $k=12$ and forgetting factor $λ=0.57$.
+  ]
+) <fig:plot_4_6_rmsek>
+
+Here the weight factor $\lambda=0.57$ is chosen loosely based on the previous @fig:plot_4_6_rmsek, as an estimated good value (in the middle of optimal values for $k \in \set{1,...,11}$). Therefore, it is not surprising that for $k=12$ the RLS-F (RLS with forgetting) does perform very poorly. For the chosen time horizon, the RLS-F model would perform best for $\lambda \to 1$, at which point it basically becomes an OLS model, better at predicting more global trends.
+
+In this szenario the E-WLS (exponential/local WLS) model performs best, simply by visual analysis. Yet, all models perform quite poorly, not finding a good compromise between local trends and global trend.
+This could be overcome by different choices of $\lambda$. However, the general notion of "forgetting" models (such as E-WLS and RLS-F) being better at predicting short term horizons (e.g. $k \in \set{1,2,3,4}$) remains. Nonetheless, this is highly dependent on noise and variance in the given time-series.
+
+In the short following exploration, we investigate superficially, whether the choice of $\lambda$ fundamentally changes that notion or just marginally improves the models predictive power.
+This time, we consider a range for $\lambda$, where it does not have its absolute minimum, but given @fig:plot_4_6_rmsek for $k=12$, the RMSE is close to minimal values.
 
 
 
