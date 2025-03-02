@@ -81,9 +81,19 @@ Using only the training data, we plot the total number of registered vehicles in
   caption: [Training data describing the total number of registered vehicles in Denmark as a function of time.]
 ) <fig:plot_observations>
 
+Apart from a significant jump between 2021 and 2022, the data follows roughly a linear trendline, especially between 2018 and the beginning of 2021.
+After the mentioned jump, the linear trend continues for approximately 6 months into 2021.
+Then the dataset shows signs of stagnating growth for the total number of cars.
+From end 2021 to 2024, the data roughly follows linearly trend again, though notably with a smaller slope than previously.
+This can be interpreted as a saturation in car registration across Denmark.
+
+We pose that reasons for this could be:
+1. Most of the population already has a car and no further need to register a new car
+2. Due to some legislation or other factor it has become less popular of viable to register a new car, which causes weaker demand for new car registrations
+
 == Linear Trend Model <sec:2_linear_trend_model>
 
-We are given the General Linear Model (GLM) in sloppy notation:
+We are given the General Linear Model (GLM):
 $
   Y_t = θ_i + θ_2 ⋅ x_t + ϵ_t
 $ <GLM>
@@ -273,7 +283,7 @@ we obtain @table:forecast_2_3.
 It should be noted that the estimation of the confidence interval is valid only
 in the case where the observations are described by the General Linear Model.
 
-#let forecast_2_3 = csv("output/forecast.csv")
+#let forecast_2_3 = csv("output/ols_forecast.csv")
 #figure(
   table(
     columns: 4,
@@ -360,7 +370,16 @@ We instead choose to _exploit_ the Weighted Least Squares model to introduce _lo
 If we choose to weigh the residuals by their recency, we able to obtain an
 estimator that values recent information more highly than older information.
 
-Referring to @Madsen_2008[p.~38-39], we state without proof that the _normal equations_ for the WLS model are given by:
+A concrete example of a #W that would induce locality would be one given by
+
+$
+#W = mat(delim: "[", lambda_(N), 0, 0, dots.h.c, 0; 0, lambda_(N - 1), 0, dots.h.c, 0; 0, 0, lambda_(N - 2), dots.h.c, 0; dots.v, dots.v, dots.v, dots.down, dots.v; 0, 0, 0, dots.h.c, lambda_(0))
+$
+
+If we set $λ_N, λ_(N-1) = 0$, we can appreciate that the model is now more local in that
+the two oldest observations are not considered in the estimation. Typically one would choose #W to be a diagnoal matrix of exponentially decaying weights, as we will see in @sec:3_1_variance_covariance_and_weight_matrices.
+
+Referencing @Madsen_2008[p.~38-39], we state without proof that the _normal equations_ for the WLS model are given by:
 
 $
   (#X^T #W #X) #θ_pred = #X^T #W #y
@@ -393,7 +412,9 @@ $
 
 Where $δ_(i j)$ is _Kroneckers delta_, $λ$ is the _forgetting factor_, and $N$ denotes the dimension of #y.
 
-=== Variance-Covariance and Weight Matrices
+To recap, we obtaing _locality_ in our model by gradually _forgetting_ older observations.
+
+=== Variance-Covariance and Weight Matrices <sec:3_1_variance_covariance_and_weight_matrices>
 
 Encouraging the reader to grit their teeth we summarise the 'variance-covariance' matrices for the OLS and WLS models as follows:
 
@@ -430,9 +451,16 @@ Considering 72 time steps, we visualise the decay of the weights in @fig:plot_3_
   caption: [Decay of weights in the Weighted Least Squares model for $λ≡0.9$.]
 ) <fig:plot_3_2_weights>
 
+To better visualise the weights, we plot the training data where the opacity of the individual observations is given by their weight in the WLS model parameterised by $λ=0.9$:
+
+#figure(
+  image("static_output/plot_3_2_decaying_weights.png", width: 50%),
+  caption: [Forgetting in WLS Model visualised using training data set for $λ≡0.9$.]
+) <fig:plot_3_2_decaying_weights>
+
 === Sums of weights
 
-We find that the sum of the weights is given by:
+We find that the sum of the weights is given by a geometric sequence:
 
 $
   sum_(i=1)^N λ^(N-i) = (1 - λ^N)/(1 - λ)
@@ -524,7 +552,7 @@ The outcome of the analysis can be seen in @fig:plot_3_6_forgetting_factors, whe
 
 We find that $λ=0.9$ is a reasonable choice for the test data set, though it is not necessarily the best choice for other data sets.
 
-== Recursive Estimation and Optimization of $λ$
+== Recursive Estimation and Optimization of $λ$ <sec:4_recursive_estimation>
 
 The OLS problem whose parameters may be obtained as given by @theta_estimation can be reformulated as an _iterative_ problem:
 
@@ -541,7 +569,7 @@ $
   vv(h) _t &≡ #X _t^T #y _t &&= sum_(i=1)^t vv(x)_i y_i
 $ <eq:4_1_R_h_sums>
 
-=== Update Equations
+=== Update Equations <sec:4_1_update_equations>
 
 Inspection of @eq:4_1_R_h_sums readily reveals the objects at timestep $t$ as a function of their values at timestep $t-1$:
 $
@@ -555,23 +583,29 @@ $
   #θ_pred _t = #θ_pred _(t-1) + mm(R)^(-1)_t vv(x)_t (y_t - vv(x)_t^T #θ_pred _(t-1))
 $ <eq:4_1_theta_pred_recursive>
 
+#pagebreak()
+
 Somewhat less neatly typeset, we also include the update equations as a pen-and-paper scan to complete the assignment objective.
 
 #figure(
-  image("jeppe_4_1_1.jpg"),
+  image("static_output/jeppe_4_1_1.jpg", width: 80%),
   caption: [Update equations on pen and paper by Jeppe Klitgaard (s250250).]
 ) <fig:plot_4_1_recursive_estimation>
 
 #figure(
-  image("jeppe_4_1_2.jpg", width: 65%),
+  image("static_output/jeppe_4_1_2.jpg", width: 65%),
   caption: [Calculations of $R_1$ and $R_2$ on pen and paper by Jeppe Klitgaard (s250250).]
 ) <fig:plot_4_1_recursive_estimation>
 
-TODO: Pen and paper Yunis
+#pagebreak()
 
-=== Computational Implementation
+#figure(
+  image("static_output/yunis_4_1.svg"),
+  caption: [Update equations on pen and paper by Yunis Wirkus (s250700).]
+)
+=== Computational Implementation <sec:4_2_computational_implementation>
 
-We implement the Recursive Least Squares as given in @eq:4_1_R_h_recursive @eq:4_1_theta_pred_recursive in Python as follows:
+We implement the Recursive Least Squares as given in @eq:4_1_R_h_recursive and @eq:4_1_theta_pred_recursive in Python as follows:
 
 ```python
 def iterate(R, theta, x_t, y_t):
@@ -592,12 +626,42 @@ We find that the initial parameter estimates are very poor,
 but gradually improve as more data is included in the estimation.
 Notably, we can see that as the slope, $θ_2$, increases as part of the iterative correction, the intercept, $θ_1$, shifts down.
 
-While the matrix operations in @eq:4_1_theta_pred_recursive are somewhat opaque, careful inspection of the parameter update equation reveals a residual term $y_t - vv(x)_t^T #θ_pred _(t-1)$ that arises by modelling the current observation with the previous parameter estimate.
+While the matrix operations in @eq:4_1_theta_pred_recursive are somewhat opaque, careful inspection of the parameter update equation reveals a residual term $y_t - vv(x)_t^T #θ_pred _(t-1)$ where $vv(x)_t^T #θ_pred$ gives a prediction $hat(y)_t$ using the model found in the previous timestep.
 
 The term $mm(R)_t^(-1) vv(x)_t$ then scales the residual appropriately, where we understand $mm(R)$ to take the role of $#X^T #X$ in the OLS model.
-Essentially, this captures the relationship between the parameters.
 
-=== Calculation and Comparison of Parameter Estimates
+Now we will draw a comparison to the regular, non-recursive OLS
+model. Imagine setting
+
+$
+ε_t = y_t - vv(x)_t^T #θ_pred _(t-1)
+$
+
+Which gives:
+
+$
+#θ_pred _t = #θ_pred _(t-1) + mm(R)^(-1)_t vv(x)_t ε_t
+$
+
+It becomes clear upon comparison with the regular OLS model that the term $vv(h)_t ≡ vv(x)_t ε_t$ may be interpreted as height of the parameter projection. Given
+$upright(bold(R))_t = upright(bold(X))_t^T upright(bold(X))_t$ is a
+projection of the design matrix $mm(X)_t$ into a symmetric, invertible
+matrix, $vv(h)_t$ can be thought of as a scaled residual term.
+
+Then overall the term becomes
+
+$  & upright(bold(R))_t^(- 1) vv(x)_t (y_t - vv(x)_t^T #θ_pred _(t - 1))\
+ & = upright(bold(R))_t^(- 1) vv(x)_t ε\
+ & = upright(bold(R))_t^(- 1) vv(h)_t\
+ & = upright(bold(hat(theta)))_t^(\*) &  & upright("from OLS")\
+\
+arrow.r.double upright(bold(hat(theta)))_t & = upright(bold(hat(theta)))_(t - 1) + upright(bold(hat(theta)))_t^(\*)
+$
+
+So we can think of the new $upright(bold(hat(theta)))_t$ as an updated
+parameter estimate, based on the previous estimate _and_ a correction term arising from the residual of the current observation compared against a prediction of this observation using the previous model.
+
+=== Calculation and Comparison of Parameter Estimates <sec:4_3_parameter_estimation>
 
 We now calculate the estimates $#θ_pred _N$.
 The meaning of $#θ_pred _N$ is ambiguous in the task.
@@ -615,5 +679,163 @@ This gives us:
   ),
   caption: [Comparison of parameter estimates obtained using Ordinary Least Squares (OLS) and Recursive Least Squares (RLS).]
 ) <table:4_3_comparison_parameters>
+
+From @table:4_3_comparison_parameters,
+we see that the RLS model has produced a significantly different parameter estimate than the OLS model.
+In order to gauge the performance of the two models, we compare the predictions in @fig:plot_4_3_ols_rls.
+
+#figure(
+  image("output/plot_4_3_ols_rls.png"),
+  caption: [Comparison of the OLS and RLS forecasts of total number of registered vehicles in Denmark.]
+) <fig:plot_4_3_ols_rls>
+
+It is readily apparent that the RLS model is a poor fit to the data,
+which we attribute to a very poor initial guess of the parameters $vv(θ)$.
+
+From the intuition we gathered in @sec:4_2_computational_implementation,
+we understand that $mm(R)^(-1)_t$ determines the scale of updates to parameters $#θ_pred _t$.
+We can allow for larger updates by reducing the initial information matrix $mm(R)_t$,
+though notably it cannot be $mm(0)$ as this would not be invertible.
+Additionally, we can improve the performance of our RLS model by having a better estimate for $vv(hat(θ))_0$
+.
+
+Based on this, we use the OLS model to come up with a reasonable $vv(hat(θ))_0$ and set a smaller initial information matrix $mm(R)_0$:
+$
+  mm(R)_0 &= mm(𝕀) ⋅ 10^(-8)\
+  vv(hat(θ))_0 &= vec(delim: "[", -100 × 10^6, 50 × 10^3)
+$
+
+This increases the initial 'eagerness' of the model to update the parameters when fed new information, while also giving a decent guess for the initial parameters.
+
+In order to get an intuition for the RLS model, we now reproduce @fig:plot_4_2_rls_parameters with the updated initial conditions:
+
+#figure(
+  image("output/plot_4_3_good_rls_parameters.png"),
+  caption: [Parameter estimates obtained using Recursive Least Squares with updated initial conditions.]
+) <fig:plot_4_3_good_rls_parameters>
+
+Reproducing @fig:plot_4_3_ols_rls with the updated initial conditions, we observe a significantly improved fit to the data:
+
+#figure(
+  image("output/plot_4_3_good_ols_rls.png"),
+  caption: [Comparison of the OLS and RLS forecasts of total number of registered vehicles in Denmark with updated initial conditions.]
+) <fig:plot_4_3_good_ols_rls>
+
+From @fig:plot_4_3_good_ols_rls, we can realise that the recursive model could be improved with forgetting
+as the parameters of a linear model are not constant with respect to time for the given data set.
+
+=== Recursive Estimation of Forgetting Factor <sec:4_4_recursive_estimation_forgetting>
+
+We first seek to get some intuition for the recursive model with _forgetting_.
+Having realised previously that the $mm(R)_t$ matrix represents some _knowledge_ of the observations accumulated over past iterations, we can understand the _forgetting factor_ as a way to _decay_ this knowledge.
+
+As such, we introduce the _forgetting factor_, $λ_t$:
+
+$
+  mm(R)_t = λ_t mm(R)_(t-1) + vv(x)_t vv(x)_t^T
+$ <eq:4_4_R_forgetting>
+
+It should be noted that one usually choses $λ_t$ to be a constant and it should not be confused with the power series that appears along the diagonal in Weighted Least Squares with exponential forgetting.
+The exponential nature of the decay of knowledge is encoded into the iterative algorithm, as can be realised by inspection when expanding $mm(R)_(t-1)$ in @eq:4_4_R_forgetting.
+
+Using the RLS model as given by the update equations in @sec:4_1_update_equations with the forgetting factor modification in @eq:4_4_R_forgetting, we can now estimate the parameters $θ_1$, $θ_2$ as a function of time $t$ for forgetting factors $λ ∈ {0.6, 0.99}$.
+
+#figure(
+  image("output/plot_4_4_rlsf_2_params_1.png"),
+  caption: [Estimates of parameter $θ_1$ obtained using Recursive Least Squares with forgetting factors $λ ∈ {0.6, 0.99}$.]
+) <fig:plot_4_4_rlsf_2_params_1>
+
+#figure(
+  image("output/plot_4_4_rlsf_2_params_2.png"),
+  caption: [Estimates of parameter $θ_2$ obtained using Recursive Least Squares with forgetting factors $λ ∈ {0.6, 0.99}$.]
+) <fig:plot_4_4_rlsf_2_params_2>
+
+Inspecting @fig:plot_4_4_rlsf_2_params_1 and @fig:plot_4_4_rlsf_2_params_2,
+we observe higher variation in the parameter estimates for $λ=0.6$ than for $λ=0.99$.
+We can understand this by appreciating the increase in _locality_ that arises from a lower forgetting factor.
+As expected, the more local model varies its parameter estimates more rapidly than a less local model.
+Both models have been initialised with $mm(R)_0 = 𝕀 ⋅ 10^(-8)$ and $vv(θ)_0 = vv(0)$.
+
+#let math_eval(x) = eval(x, mode: "markup")
+#let wls_rls_params = csv("output/wls_rls_params.csv")
+#figure(
+  table(
+    columns: 4,
+    table.header(..wls_rls_params.remove(0).map(math_eval).map(strong)),
+    ..wls_rls_params.flatten().map(math_eval)
+  ),
+  caption: [
+    Parameter estimates using WLS and RLS models with different forgetting factors.
+    Note that the parameters for the RLS model are for $t=N$.
+  ]
+) <table:4_4_wls_rls_params>
+
+From @table:4_4_wls_rls_params, we observe that the RLS model with $λ=0.7$ produces final parameter estimates that are very close to the WLS model.
+
+=== One-Step Predictions with RLS <sec:4_5_one_step_predictions>
+
+We introduce the concept of a prediction horizon, $k$, which denotes the number of steps ahead of given data set we wish to predict. To ease notation, we employ $t+k|t$ to mean a prediction for time $t+k$ given data available at time $t$. As such:
+
+$
+  hat(y) _(t+k|t) = vv(x)_(t+k|t)^T #θ_pred _t
+$
+
+We may then define the residual as:
+
+$
+  hat(ε)_(t+k|t) = y_(t+k) - hat(y) _(t+k|t)
+$
+
+We employ the RLS model with forgetting factor $λ ∈ $ to produce residuals against the
+training data set for one-step predictions ($k ≡ 1$) and present the results in @fig:plot_4_5_rls_residuals.
+
+#figure(
+  image("output/plot_4_5_rls_residuals.png"),
+  caption: [
+    Residuals obtained using Recursive Least Squares with forgetting factors $λ ∈ {0.6, 0.99}$ for one-step predictions.
+  ]
+) <fig:plot_4_5_rls_residuals>
+
+We observe that the model with shorter memory ($λ=0.7$) is generally better at adaption to the
+changes in trend found in data set.
+Again, this matches with our expectations that a more local model will be able to better match the local trends in the data.
+As a result, the magnitude of the residuals is generally lower for the $λ=0.7$ model.
+
+=== Optimal Forgetting Factor for a Prediction Horizon <sec:4_6_optimal_forgetting>
+
+We now seek to understand how the optimal forgetting factor $λ^*$ arises for a given prediction horizon characterised by a $k$-step prediction.
+
+We consider the instructive cases of the extrema, $λ→0$ and $λ→1$. For $λ→0$, we have a model that is _very_ local and forgets past information almost immediately.
+We would expect this to perform relatively poorly, even for a somewhat non-linear model.
+For $λ→1$, we have a model that is _very_ global and retains past information almost indefinitely,
+will perform well for a truly linear model, but for coloured noise, it will perform poorly.
+
+Appreciating these two logical extrema,
+we can begin to see how our forgetting factor should be matched to the horizon we are trying to predict. If we just want to predict the next timestep, it is intuitive that a more local model would in generally perform better since longer-term non-linear trends will not have a significant impact on the prediction. On the other hand, if we are trying to predict further into the future,
+an overly local model would not have sufficient understanding of longer-term trends that may dominate the residual for a prediction horizon of this width.
+
+To investigate this, we run the RLS model with forgetting factors $λ ∈ {0.50, 0.51, …, 0.99}$ for prediction horizons $k ∈ {1, 2, … , 12}$. and collect the Root Mean Square Error as a function of $k$ and $λ$:
+
+$
+  "RMSE"(k, λ) = sqrt(1/(N - k) sum_(t=1)^(N-k) hat(ε)_(t+k|t)^2(λ))
+$
+
+Where $hat(ε)_(t+k|t)(λ)$ denotes the residuals for an RLS model with forgetting factor $λ$ and prediction horizon $k$.
+
+#figure(
+  image("output/plot_4_6_rmsek.png"),
+  caption: [
+    Root Mean Square Error as a function of prediction horizon $k$ and forgetting factor $λ$.
+    The minimal RMSE for each $k$ is marked with a dashed vertical line of the corresponding colour.
+  ]
+) <fig:plot_4_6_rmsek>
+
+From @fig:plot_4_6_rmsek, we observe that the optimal forgetting factor for the very highest value of $k=12$ is $λ=0.99$, while shorter prediction horizons are better served by a more local models. A choice of around $λ=0.65$ is generally a good choice across different horizons.
+
+Taking note of the shape of the curves in @fig:plot_4_6_rmsek, we can validate our speculation above. For short prediction horizons, the optimal forgetting factor is lower, while for longer prediction horizons, the optimal forgetting factor is higher.
+
+=== Predictions Using RLS and Other Models
+
+
 
 #bibliography("report.bib")
