@@ -1,6 +1,11 @@
 #import "@preview/physica:0.9.4": super-T-as-transpose
 #import "@preview/codly:1.2.0": *
 #import "@preview/codly-languages:0.1.1": *
+#import "utils.typ": mathformatter, mref
+
+// Font fix because FruityFeedback is trash
+#set text(font: "STIX Two Text")
+#show math.equation: set text(font: "STIX Two Math")
 
 #show: codly-init.with()
 #codly(languages: codly-languages)
@@ -11,35 +16,8 @@
 #show: super-T-as-transpose
 #set table.header()
 
-#let below(x, b) = {
-  math.scripts(math.attach(math.limits(x), b: b))
-}
-
-#let underbar(x) = {
-  below(x, math.macron)
-}
-
-#let mm(x) = {
-  let out = math.upright(x)
-  out = math.bold(out)
-  out = underbar(out)
-  out = underbar(out)
-
-  out
-}
-
-#let vv(x) = {
-  let out = math.upright(x)
-  out = math.bold(out)
-  out = underbar(out)
-
-  out
-}
-
-#let mref(key) = {
-  let lbl = label(key)
-  math.text([(#ref(lbl, supplement: none))])
-}
+#let vv = mathformatter(underbars: 0, bold: true, upright: false)
+#let mm = mathformatter(underbars: 0, bold: true, upright: true)
 
 // Math defines
 #let θ = $vv(θ)$
