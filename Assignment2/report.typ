@@ -174,9 +174,27 @@ $
   ϕ(B) Φ(B^s) ∇^d ∇^D_s y_t = θ(B) Θ(B^s) ε_t
 $ <eq:2_seasonal_arima>
 
+To grasp a better understanding, it is helpful to explain the role of some variables in the model:
+
+$ 
+s & arrow.r upright("seasonal shift") &  & upright("convolution onto AR, MA, ARMA")\
+p & arrow.r upright("lag of time-series") &  & upright("for AR, polynomial order")\
+ &  &  & phi.alt (B) Y_t = Y_t (1 + phi.alt_1 B + phi.alt_2 B^2 . . . phi.alt_p B^p) = epsilon_t\
+q & arrow.r upright("lag of random noise") &  & upright("for MA, polynomial order")\
+ &  &  & theta (B) epsilon_t = epsilon_t (1 + theta_1 B + theta_2 B^2 . . . theta_p B^p) = Y_t\
+phi.alt & arrow.r upright("AR") (p) &  & upright("coeff. for the auto-regressive part")\
+Phi & arrow.r upright("AR") (P) &  & upright("coeff. for the seasonal auto-regressive part")\
+theta & arrow.r upright("MA") (q) &  & upright("coeff. for the moving-average part")\
+Theta & arrow.r upright("AR") (P) &  & upright("coeff. for the seasonal moving-average part")\
+ &  &  & upright("that’s why shift ") B^s\
+nabla^d & arrow.r nabla^d Y_t = Y_t - Y_(t + d) &  & upright("difference shift of normal model")\
+nabla_s^D & arrow.r nabla_s^D Y_t = Y_(t + s) - Y_(t + s + d) &  & upright("difference shift of seasonal model")\
+$
+
+
 In order to simulate the seasonal processes we utilise the Python library `statsmodels`,
 which offers an implementation of the
-`SARIMAX` (Seasonal AutoRegressive Integrated Moving Average with eXogenous regressors) model.
+`SARIMAX` (Seasonal AutoRegressive Integrated Moving Average with exogenous regressors) model.
 
 Looking at the definition of the SARIMAX implementation and comparing against @eq:2_seasonal_arima, we confirm that the parameters are defined in a similar fashion,
 meaning there should not be any sign transformations needed for the parameters.
