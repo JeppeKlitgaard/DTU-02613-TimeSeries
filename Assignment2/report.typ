@@ -51,7 +51,7 @@ Date: 2025-03-24
 
 = Stability <sec:1_stability>
 
-We are given an AR(2) process ${X_t}$ with residual term $ε_t$ arising from a stochastic process ${ε_t} ∈ 𝒩(0, σ_ε^2=1)$ :
+We are given an AR(2) process ${Y_t}$ with residual term $ε_t$ arising from a stochastic process ${ε_t} ∈ 𝒩(0, σ_ε^2=1)$ :
 $
   y_t + ϕ_1 y_(t-1) + ϕ_2 y_(t-2) = ε_t
 $ <eq:1_ar2>
