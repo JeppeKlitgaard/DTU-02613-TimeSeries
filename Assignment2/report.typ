@@ -100,6 +100,64 @@ Which is satisfied by inspection of @eq:1_roots.
 
 As such, we conclude that the process is stationary for $ϕ_1 = -0.7, ϕ_2 = -0.2$.
 
+#pagebreak()
+
+=== A little more mathematical background 
+#linebreak()
+
+Let us provide some theory detour into why the roots of the
+characteristic equation actually provide information about stability.
+
+The background is that in signal processing as an overall field, there
+are a variety of domain transformations. Most prominent of all the
+Fourier transform, which takes a signal (real or complex) and decomposes
+it into a sum of its base-frequencies in the form of sine and cosine
+waves (for $bb(C) arrow.r.squiggly A_f e^(i x) = A_f (cos x + i sin x)$,
+where $A_f$ are the Fourier coefficients). The other very prominent
+domain is the Laplace domain, which converts time-domain functions, like
+our signal, into a complex frequency domain. In our case, we consider
+the discrete time version of the Laplace-Transform - the Z-transform:
+
+$ Y (z) = sum_(t = 0)^oo y_t z^(- t) quad z in bb(C) $
+
+This transform maps a signal $Y_t$ into the complex plane. Intuitively
+one can think of it as a signal being squeezed into the sum a
+polar-coordinate sequence.
+
+For stability, we want to find poles in the Z-plane. Those are the
+points for which there is a singularity in the transfer function
+$Y (z)$, hence, the complex values $z$ for which $y_t z^(- t)$ is a
+division by $0$ error. Intuitively those poles can be thought of as
+points in the Z-plane (complex plane) where the signal (after transform)
+decays.
+
+Now back to our AR-process, we have $phi.alt (B) Y_t = epsilon_t$ as the
+shorthand expression for the polynomial in $B$:
+
+$ epsilon_t & = y_t + phi.alt_1 B y_t + phi.alt_2 B^2 y_t\
+epsilon_t & = phi.alt (B) Y_t\
+ $
+
+Now we apply the transfer function to both the noise-signal $epsilon_t$
+and the original signal $Y_t$, with a minor substitution $B = z^(- 1)$;
+because the backshift operators\' Z-transform representation is
+$B Y_t arrow.r^(Z - t r a n s .) z^(- 1) Y (x)$:
+
+$  &  & epsilon_t & = phi.alt (B) Y_t\
+arrow.r.squiggly &  & E (z) & = phi.alt (B) Y (z)\
+arrow.l.r.double &  & frac(E (z), phi.alt (z^(- 1))) & = Y (z)\
+ $
+
+Hence, if we want to find the poles/singularities, we need to find the roots of
+
+$  
+&  & phi.alt (B) & = 1 + phi.alt_1 B + . . . + phi.alt_p B^p & = 0\
+arrow.l.r.double &  & phi.alt (z^(- 1)) & = 1 + phi.alt_1 z^(- 1) + . . . + phi.alt_p z^(- p) & = 0\
+arrow.l.r.double &  & z^p phi.alt (z^(- 1)) & = z^p + phi.alt_1 z^(p - 1) + . . . + phi.alt_p & = 0\
+arrow.r.squiggly^(upright("p=2")) &  &  & = z^2 + phi.alt_1 z + phi.alt_2 & = 0\
+$
+
+
 == Invertibility
 
 Invertibility refers to the ability to represent current errors as a function of past observations,
@@ -166,6 +224,8 @@ These two figures yield an intuition for the role of the parameters,
 where those that lead to a negated relation to the previous observations
 give rise to the cyclical behaviour found in @fig:1_4_autocorrelation_plot_incorrect.
 This will be investigated further in the following sections.
+
+#pagebreak()
 
 = Simulating seasonal processes <sec:2_simulating_seasonal_processes>
 
