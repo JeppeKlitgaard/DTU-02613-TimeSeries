@@ -301,6 +301,24 @@ However, we can add additional commentary - for instance, we realise that more c
 
 The seasonality parameter will generally be relatively easy to deduce from autocorrelations, especially if the process only features a single periodicity with little variance in the periods.
 
+Overall it is probably best to use parameter estimation techniques. In a
+real world scenario, one would likely have the time-series as actual
+data and not just as a plotted graph. There are two main ways to
+estimate especially $phi.alt$ and $theta$ for ARMA models:
+
++ OLS regression for AR models
+  $upright(bold(hat(phi.alt))) = (X^T X)^(- 1) X^T upright(bold(y_(t - k)))$
+  with a feature matrix X constructed from the $t - k$ to the $t - N$ th
+  samples, with order of the AR model $k$
++ MLE for MA models to estimate $upright(bold(hat(theta)))$ based on a
+  likelihood function that assumes Gaussian $upright(bold(epsilon))_t$
+
+Since none of the given model display any trends, but rather are all
+stationary, a de-trending via differencing on real world data may be
+appropriate. Otherwise combining a standard trend model like OLS, RLS or
+WLS as a prior model, could be useful.
+
+
 = Identifying ARMA(p,q) Models <sec:3_arma_identification>
 
 Now, using the rules established and tested in @sec:2_simulating_seasonal_processes,
@@ -346,5 +364,13 @@ Fiddling a bit with the magnitude of the parameters, we obtain @fig:3_3, which m
   image("output/plot_3_3.png"),
   caption: [Simulated ARMA(2,1) process with $ϕ_1 = 0.45, ϕ_2 = 0.3, θ_1 = -0.5$]
 ) <fig:3_3>
+
+
+=== Commentary:
+
+In addition, it would be a good idea to start some residual analysis on the given models. As mentionend in Ex 2.7: in a real world scenario, we would have a time-series as actual data.
+
+The main difficulty is the estimate the order of models, so the parameters $(p,d,q)$. From there, building a model can be started done by fitting and identifying parameters numerically.
+Ideally, we can start with models of lower order, thus lower complexity and then analyse the residuals between model and data. As metrics, we suggest AIC and BIC, as those also penalize complexity of a model, which prevents overfitting. This will be especially useful when combining with regression methods (OLS, WLS, RLS).
 
 #bibliography("report.bib")
