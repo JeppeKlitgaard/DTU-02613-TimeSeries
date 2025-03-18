@@ -422,7 +422,7 @@ Fiddling a bit with the magnitude of the parameters, we obtain @fig:3_3, which m
 
 #figure(
   image("output/plot_3_3.png"),
-  caption: [Simulated ARMA(2,1) process with $ϕ_1 = 0.45, ϕ_2 = 0.3, θ_1 = -0.5$]
+  caption: [Simulated ARMA(2,1) process with $ϕ_1 = 1.1, ϕ_2 = -0.2, θ_1 = 0.9$]
 ) <fig:3_3>
 
 
