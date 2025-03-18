@@ -102,8 +102,7 @@ As such, we conclude that the process is stationary for $ϕ_1 = -0.7, ϕ_2 = -0.
 
 #pagebreak()
 
-=== A little more mathematical background 
-#linebreak()
+=== Additional Theory
 
 Let us provide some theory detour into why the roots of the
 characteristic equation actually provide information about stability.
@@ -116,18 +115,18 @@ waves (for $bb(C) arrow.r.squiggly A_f e^(i x) = A_f (cos x + i sin x)$,
 where $A_f$ are the Fourier coefficients). The other very prominent
 domain is the Laplace domain, which converts time-domain functions, like
 our signal, into a complex frequency domain. In our case, we consider
-the discrete time version of the Laplace-Transform - the Z-transform:
+the discrete time version of the Laplace-Transform — the Z-transform:
 
-$ Y (z) = sum_(t = 0)^oo y_t z^(- t) quad z in bb(C) $
+$ Y(z) = sum_(t = 0)^oo y_t z^(- t) quad z in bb(C) $
 
-This transform maps a signal $Y_t$ into the complex plane. Intuitively
-one can think of it as a signal being squeezed into the sum a
+This transform maps a signal $y_t$ into the complex plane. Intuitively,
+one can think of it as a signal being squeezed into the sum of a
 polar-coordinate sequence.
 
 For stability, we want to find poles in the Z-plane. Those are the
 points for which there is a singularity in the transfer function
 $Y (z)$, hence, the complex values $z$ for which $y_t z^(- t)$ is a
-division by $0$ error. Intuitively those poles can be thought of as
+division by $0$. Intuitively those poles can be thought of as
 points in the Z-plane (complex plane) where the signal (after transform)
 decays.
 
@@ -150,7 +149,7 @@ arrow.l.r.double &  & frac(E (z), phi.alt (z^(- 1))) & = Y (z)\
 
 Hence, if we want to find the poles/singularities, we need to find the roots of
 
-$  
+$
 &  & phi.alt (B) & = 1 + phi.alt_1 B + . . . + phi.alt_p B^p & = 0\
 arrow.l.r.double &  & phi.alt (z^(- 1)) & = 1 + phi.alt_1 z^(- 1) + . . . + phi.alt_p z^(- p) & = 0\
 arrow.l.r.double &  & z^p phi.alt (z^(- 1)) & = z^p + phi.alt_1 z^(p - 1) + . . . + phi.alt_p & = 0\
