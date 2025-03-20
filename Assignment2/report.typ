@@ -432,4 +432,7 @@ In addition, it would be a good idea to start some residual analysis on the give
 The main difficulty is the estimate the order of models, so the parameters $(p,d,q)$. From there, building a model can be started done by fitting and identifying parameters numerically.
 Ideally, we can start with models of lower order, thus lower complexity and then analyse the residuals between model and data. As metrics, we suggest AIC and BIC, as those also penalize complexity of a model, which prevents overfitting. This will be especially useful when combining with regression methods (OLS, WLS, RLS).
 
+Furthermore, the given chart indicates some notion of auto-regressive seasonality. Yet, the period of seasonality would be too long to actually fit a model of reasonable complexity (as the ACF and PACF do not allow estimations for such long periods; we are talking about 100 periods towards the end of the series).
+Therefore, we stick to the simpler ARMA(2,0,1) model. As it does fit the model well.
+
 #bibliography("report.bib")
