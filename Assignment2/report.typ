@@ -128,7 +128,7 @@ points for which there is a singularity in the transfer function
 $Y (z)$, hence, the complex values $z$ for which $y_t z^(- t)$ is a
 division by $0$. Intuitively those poles can be thought of as
 points in the Z-plane (complex plane) where the signal (after transform)
-decays.
+decays, provided the point is within the unit-circle in the complex plane.
 
 Now back to our AR-process, we have $phi.alt (B) Y_t = epsilon_t$ as the
 shorthand expression for the polynomial in $B$:
