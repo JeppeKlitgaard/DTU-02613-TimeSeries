@@ -18,7 +18,7 @@
 )
 
 // Font fix because FruityFeedback is trash
-#set text(font: "STIX Two Text")
+#set text(font: "STIX Two Text", size: 10pt)
 #show math.equation: set text(font: "STIX Two Math")
 
 #show: codly-init.with()
@@ -345,8 +345,109 @@ at power generation observations due to the transformation.
 This is simply a consequence of linearising the data in order to fit it to our linear model.
 
 From inspection, we find that the prediction intervals are likely too wide during the summer months
-where power generation is at its peak, due to overly large effect of the variance during the winter months on the residual error estimates.
+where power generation is at its peak,
+due to the overly large effect of the variance during the winter months on the residual error estimates.
 
 The implementation of the prediction intervals can be found in the attached Jupyter Notebook `JK_2.ipynb`.
+
+= An ARX Model for the Heating of a Box <sec:3>
+
+We are given a data set of hourly measurements from a box instrumented with a heater,
+an internal temperature sensor and an external temperature sensor.
+
+The box has window on its south-facing wall, onto which the vertical solar radiation is also recorded in the data set.
+
+The internal temperature of the box was kept approximately constant using a thermostatic control of the internal heater.
+
+
+== Exploratory Dependency Analysis <sec:3_1>
+
+We load the data set and seek to visually explore the dependency between the heater power $P_h$, temperature delta between inside and outside, $Δ T$, and the vertical solar radiation $G_v$.
+
+For the purposes of visualisation, we standardize the data by subtracting the mean and dividing by the standard deviation,
+which we then plot in @fig:3_1_analysis.
+
+#figure(
+  image("output/3_1_analysis.png"),
+  caption: [Standardized data set of heater power $P_h$, temperature delta $Δ T$ and vertical solar radiation $G_v$.]
+) <fig:3_1_analysis>
+
+@fig:3_1_analysis clearly shows an inverse relationship between the heater power and solar radiation,
+as we would intuitively expect on physical grounds – for a constant temperature difference, we would expect the sum of the heater power and solar radiation to be constant, thus requiring the heater to compensate for any changes in solar heating.
+
+We additionally observe a positive correlation between the heater power and the temperature difference,
+which again matches our physical understanding that a larger temperature difference would lead to a larger heat loss from the box, assuming the inside temperature is larger than the external temperature. Thermostaticity would then require a larger heater power to compensate for the increase in heat loss.
+
+== Test/Train Split <sec:3_2>
+
+We now split the dataset into two parts, one for training and one for testing.
+The cut-off point is set to 2013-02-06 00:00, which is the last observation of the training set.
+
+== Further Dependency Investigation <sec:3_3>
+
+Following on from the investigation in @sec:3_1,
+we plot the three variables against each other in the pair plots found in @fig:3_3_pairplot.
+
+#figure(
+  image("output/3_3_pairplot.png"),
+  caption: [Pair plot of the training data set.]
+) <fig:3_3_pairplot>
+
+In @fig:3_3_pairplot we again observe that the heater power $P_h$ and the temperature difference $Δ T$ are positively correlated, with the heater power being larger when the temperature difference is larger.
+Interestingly, we find that the temperature difference as a function of the heater power roughly follows
+one of two lines, which we can further understand when inspecting the pair plot between the temperature difference and the solar radiation $G_v$, which appears to be roughly bimodal.
+This does not lend itself to immediate interpretation, but does suggest that there is an underlying structure in
+the data that may be elucidated with further analysis.
+
+Additionally, we confirm the observation from @sec:3_1 that the heater power and solar radiation $G_v$ are negatively correlated.
+
+Additionally we plot the autocorrelations and cross-correlations in a similar matrix to the one found in @fig:3_3_pairplot,
+which reveals characteristic timescales for the three variables and their correlations.
+
+#figure(
+  image("output/3_3_acf_ccf.png"),
+  caption: [Autocorrelation and cross-correlation of the training data set.]
+) <fig:3_3_acf_ccf>
+
+In @fig:3_3_acf_ccf we find a seasonality of approximately 24 hours in the heater power $P_h$
+and solar radiation $G_v$, which we would expect from the diurnal solar cycle.
+
+The temperature difference does not follow this pattern, partly because it has a much longer timescale in the data set.
+This could be attributed to more complex weather patterns, such as different wind patterns or nightly cloud cover.
+The characteristic timescale of the autocorrelation function of the temperature difference
+reveals that the external temperature varies rather slowly compared to the other two variables.
+
+The inverse relationship between solar radiation and heater power is also confirmed in the cross-correlation plot,
+where we find a negative correlation between the two variables.
+We find only a small correlation between the temperature difference and the solar radiation.
+
+Lastly, we inspect the partial autocorrelation functions of the three variables in @fig:3_3_pacf.
+
+#figure(
+  image("output/3_3_pacf.png"),
+  caption: [Partial autocorrelation of the training data set.]
+) <fig:3_3_pacf>
+
+Comparing @fig:3_3_pacf with the ARMA order identification table, @table:order_identification, we
+find that the heater power $P_h$ and temperature difference $Δ T$ may be well described
+by an AR(2) process, while the solar radiation $G_v$ appears to be well described by an AR(1) process.
+
+The heater power $P_h$ and solar radiation $G_v$ additionally show evidence of seasonality, suggesting
+a seasonality of 24 hours may be appropropriate for modelling their behaviour.
+
+#figure(
+  table(
+    columns: (1.5fr, 4fr, 4fr),
+    table.header("", [ACF $ρ(k)$], [PACF $φ_(k k)$]),
+    $"AR"(p)$, [Damped exponential and/or sine functions], $φ_(k k) = 0 "for" k > p$,
+    $"MA"(q)$, $ρ(k) = 0 "for" k > q$, [Dominated by damped exponential and/or sine functions],
+    $"ARMA"(p,q)$, [Damped exponential and/or sine functions after lag $q - p$], [Dominated by damped exponential and/or sine functions after lag $p - q$s],
+  ),
+  caption: [Reproduction of Table 6.1 from @Madsen_2008[p.~155] showing the expected behaviour of the autocorrelation function for different ARMA processes],
+) <table:order_identification>
+
+== Impulse Response
+
+TODO
 
 #bibliography("report.bib")
