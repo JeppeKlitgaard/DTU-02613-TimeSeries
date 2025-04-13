@@ -446,6 +446,8 @@ a seasonality of 24 hours may be appropropriate for modelling their behaviour.
   caption: [Reproduction of Table 6.1 from @Madsen_2008[p.~155] showing the expected behaviour of the autocorrelation function for different ARMA processes],
 ) <table:order_identification>
 
+TODO ELABORATE ON WHAT THIS DOES NOT SHOW?
+
 == Impulse Response
 
 TODO
