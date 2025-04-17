@@ -18,14 +18,14 @@
 )
 
 // Font fix because FruityFeedback is trash
-#set text(font: "STIX Two Text")
+#set text(font: "STIX Two Text", size: 10pt)
 #show math.equation: set text(font: "STIX Two Math")
 
 #show: codly-init.with()
 #codly(languages: codly-languages)
 
 
-#set heading(numbering: "1.1")
+#set heading(numbering: "1.1.a")
 #set math.equation(numbering: "(1)", supplement: [Eq.])
 #show: super-T-as-transpose
 #set table.header()
@@ -34,6 +34,7 @@
 #let mm = mathformatter(underbars: 0, bold: true, upright: true)
 
 #let Cov = math.op("Cov")
+#let Var = math.op("Var")
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -56,13 +57,27 @@ $
   X_t + ϕ_1 X_(t-1) + ϕ_2 X_(t-2) = ε_t
 $ <eq:1_ar2>
 
+Our implementation will be based on the `statsmodels` library in Python, which offers an implementation of the `SARIMAX` (Seasonal AutoRegressive Integrated Moving Average with eXogenous regressors) model.
+
+Importantly, the `SARIMAX` model follows an alternative formulation of the model:
+$
+  y_t = φ_1 y_(t-1) + φ_2 y_(t-2) + ε_t
+$ <eq:1_sarimax_statsmodels>
+
+Where we have used the two different variants of the letter phi to denote the different formulations.
+Comparing @eq:1_ar2 and @eq:1_sarimax_statsmodels we find that the two formulations are equivalent given a sign change:
+$
+  φ_1 = -ϕ_1, wide φ_2 = -ϕ_2
+$ <eq:1_phi_sign_change>
+
 == Realisations
 
 === 1.1 & 1.2
 We simulate the given process 5 times using the ```SARIMAX``` module with $n=200$ observations and the coefficients set to: $ϕ_1 = -0.6$ and $ϕ_2 = 0.5$
 
 #figure(
-  image("img/blabla.png"),
+  // image("img/blabla.png"),
+  [],
   caption: [Simulation and Autocorrelation function of AR(2) process with $ϕ_1 = -0.6, ϕ_2 = 0.5$.],
 ) <fig:1_1_sim-acf>
 
@@ -98,31 +113,327 @@ We simulate the given process 5 times using the ```SARIMAX``` module with $n=200
 
 We are given a seasonal AR model:
 $
-  (1 - ϕ_1B)(1 + Φ_1B^{12})(log(Y_t)-µ) = ε_t
+  (1 + ϕ_1B)(1 + Φ_1B^12)(log(Y_t)-µ) = ε_t
 $ <eq:2_seasonal_ar>
 
 where $Y_t$ is the monthly energy from the plant in MWh, ${ε_t}$ is a white-noise process with variance $σ_ε^2$ . The parameters $ϕ_1 = −0.38$, $Φ_1 = −0.94$ and $µ = 5.72$ are assumed to be known. Based on 36 observations, it is found that $σ_ε^2 = 0.22^2$.
 
+== Forecasting and Residuals
 
-= OLD PART!!!!!!!!!!!!!!!!!!!!
+=== Reformulation
 
-In order to simulate the seasonal processes we utilise the Python library `statsmodels`,
-which offers an implementation of the
-`SARIMAX` (Seasonal AutoRegressive Integrated Moving Average with eXogenous regressors) model.
+Using a substitution $X_t = log(Y_t) - μ$ we can rewrite the model, @eq:2_seasonal_ar, as:
+$
+  (1 + ϕ_1B)(1 + Φ_1B^12)X_t = ε_t
+$ <eq:2_rewritten_ar_1>
 
-Looking at the definition of the SARIMAX implementation and comparing against @eq:2_seasonal_arima, we confirm that the parameters are defined in a similar fashion,
-meaning there should not be any sign transformations needed for the parameters.
+We are then asked to rewrite the model in order to calculate the residuals $hat(ε)_(t+1|t)$,
+which we understand to be the estimated one-step-ahead forecast error, such that $hat(ε)_(t+1|t) ≔ X_(t+1) - hat(X)_(t+1)$.
+Recalling $B^q X_t ≔ X_(t-q)$, we expand @eq:2_rewritten_ar_1 to find:
+$
+  (1 + ϕ_1B)(1 + Φ_1B^12)X_t &= ε_t\
+  X_t + ϕ_1 B X_t + Φ_1 B^12 X_t + ϕ_1 Φ_1 B^13 X_t &= ε_t\
+  X_t + ϕ_1 X_(t-1) + Φ_1 X_(t-12) + ϕ_1 Φ_1 X_(t-13) &= ε_t\
+$
 
-We employ initial conditions $vv(y_t) = vv(0)$ and avoid burn-in effects by
-simulating the models for $N_"burn-in" = 10000$ before simulating the process.
+Multiplying through by $B^(-1)$ we find:
+$
+  X_(t+1) + ϕ_1 X_t + Φ_1 X_(t-11) + ϕ_1 Φ_1 X_(t-12) &= ε_(t+1)\
+$
 
-For all simulations, we use $n=1000$ observations and let $ε_t ∼ 𝒩(0, 1)$.
+Solving for $X_(t+1)$ we find:
+$
+  X_(t+1) = ε_(t+1) - ϕ_1 X_t - Φ_1 X_(t-11) - ϕ_1 Φ_1 X_(t-12)\
+$ <eq:2_forecast_1>
 
-When computing the (partial) autocorrelation functions we use `plot_(p)acf`
-from `statsmodels` with $N_"lags"=30$ and a significance level of $p=0.05$ for the confidence intervals.
+We then construct the _optimal predictor_ for $X_(t+1)$, @Madsen_2008[eq.~5.139]:
+$
+  hat(X)_(t+1)
+  &= 𝔼[X_(t+1)|X_t, X_(t-1), …]\
+  &= -hat(ϕ)_1 X_t - hat(Φ)_1 X_(t-11) - hat(ϕ)_1 hat(Φ)_1 X_(t-12) wide wide 𝔼[ε] = 0\
+$
 
-In order to understand the behaviour of the simulations,
-we refer to Table 6.1 in @Madsen_2008[p.~155], which we reproduce here:
+Where we have used the fact that the $ε∼𝒩(0, σ^2_ε)$.
+Thus the one-step-ahead forecast error becomes:
+$
+  hat(ε)_(t+1|t) &= X_(t+1) - hat(X)_(t+1)\
+  &= X_(t+1) + hat(ϕ)_1 X_t + hat(Φ)_1 X_(t-11) + hat(ϕ)_1 hat(Φ)_1 X_(t-12)\
+$ <eq:2_1_prediction_error>
+
+=== Verifying Residuals in Dataset <sec:2_1_a>
+
+As already noted in the section above, we assume that the residuals are independent and identically distributed (i.i.d.)
+with a zero-mean normal distribution.
+
+We can verify that this is indeed the case by constructing the
+appropropriate seasonal AR model using the `SARIMAX` class from `statsmodels`.
+Again we take careful notice of the signs of the parameters $ϕ_1$, $Φ_1$, both
+of which must be negated to match the convention of the `SARIMAX` class.
+
+Utilising the built-in `plot_diagonstics` function of the fitted model, we produce @fig:2_residual_analysis.
+
+#figure(
+  image("output/2_residual_analysis.png"),
+  caption: [Residual analysis of the solar power dataset using $ϕ_1=-0.38$, $Φ_1=-0.94$ and $σ_ε^2=0.22^2$
+  in the notation established by @eq:2_rewritten_ar_1.
+  Note that the residual analysis is performed on the transformed data $X_t = log(Y_t) - μ$.],
+) <fig:2_residual_analysis>
+
+By inspection of @fig:2_residual_analysis we find no evidence that the residuals violate
+the assumption of i.i.d. with a zero-mean normal distribution.
+In particular, we find that the standardised residuals do not exhibit strong systematic patterns,
+although the first summer (observations 5-10) does appear to be skewed slightly positive in the residuals.
+Additionally, we find the residuals to be well-described by a normal distribution as seen in the Q-Q plot and histogram.
+
+One could carry out a Lljung-Box test to further substantiate this claim, but we find that
+this is not nececssary in this case.
+
+== Forecasting
+
+Using the same model that we fitted in @sec:2_1_a, we produce a 12 month forecast ($k=12$)
+using the `forecast` method.
+
+Importantly, the forecasted data must be transformed back into the original scale of the dataset:
+$
+  X_t & := log(Y_t) - μ wide wide &"Forward"\
+  Y_t & = e^(X_t + μ) wide wide &"Backward"\
+$ <eq:2_transformations>
+
+#let data_2_2= csv("output/2_2.csv")
+
+#figure(
+  table(
+    columns: data_2_2.at(0).len(),
+    table.header([*Time*], [*Power, $bold(Y_t)$ \[MWh*\]], $bold(X_t)$),
+    ..data_2_2.slice(1).flatten(),
+  ),
+  caption: [Twelve month forecast using model given in @eq:2_seasonal_ar.]
+) <table:2_2_forecast>
+
+Which we can plot alongside the original data to produce @fig:2_2_forecast.
+#figure(
+  image("output/2_2_forecast.png"),
+  caption: [Twelve month forecast using model given in @eq:2_seasonal_ar.]
+) <fig:2_2_forecast>
+
+We find that the forecasted data matches our intuition of the data well and
+follows the seasonal pattern observed in the historical data of power generation.
+
+== Prediction Intervals
+
+We now wish to consider the _variance_ in our _predictions_, or rather we seek to
+obtain the _variance of the prediction error_, @eq:2_1_prediction_error:
+$
+  Var(hat(ε)_(t+1|t)) = Var(X_(t+1) - hat(X)_(t+1))\
+$
+
+In order to carry out this calculation, we convert our process to a Moving-Average (MA) process:
+$
+  X_t
+  &= ε_t/((1 + ϕ_1B)(1 + Φ_1B^12)) wide wide ⇔ &&#mref("eq:2_seasonal_ar")\
+  &= (1 + ψ_1 B + ψ_2 B^2 + …)ε_t+ ... wide wide && "Definition of MA process"\
+$ <eq:2_ma_process_1>
+
+From @eq:2_ma_process_1 we recover the constraint:
+$
+  (1 + ψ_1 B + ψ_2 B^2 + …)(1 + ϕ_1 B)(1 + Φ_1 B^12) &= 1\
+  (1 + ψ_1 B + ψ_2 B^2 + …)(1 + ϕ_1 B + Φ_1 B^12 + ϕ_1 Φ_1 B^13) &=1\
+$ <eq:2_ma_process_constraints>
+
+Which imposes that all coefficients of the power series of $B$ must vanish.
+Comparing powers of $B^i$ we find the following constraints on the weights
+$ψ_i$ of the transfer function:
+$
+  ψ_i = cases(
+    (-ϕ_1)^i wide & 1 ≤ i ≤ 11\
+    (-ϕ_1)^i - Φ_1(-ϕ_1)^(i-12) wide & 12 ≤ i ≤ 23\
+    ⋮ wide & ⋮
+  )
+$ <eq:2_ma_weights>
+
+Using our MA formulation we again consider the expression of $X_(t+1)$ using the treatment in @Madsen_2008[sec:~5.7.1]:
+$
+  X_(t+k) = ε_(t+k) + ψ_1 ε_(t+k-1) + … + ψ_k ε_(t) + ψ_(k+1) ε_(t-1) + …
+$
+
+We consider the expectation value of the residual $ε_(t+k)$.
+For past observations, when $k ≤ 0$, have a realisation of the residual and thus this will be our expected value.
+For future observations, when $k > 0$,
+we have no realisation of the residual and thus the expected value is the mean of the distribution of $ε$,
+which we recall to be zero:
+$
+  𝔼[ε_(t+k)|X_t, X_(t-1), …] = cases(
+    ε_(t+k) wide & k ≤ 0\
+    0 wide & k > 0
+  )
+$ <eq:2_residual_expectation>
+
+From which we can obtain our $k$-step predictions, $X_(t+k|t)$:
+$
+  X_(t+k|t)
+  &= 𝔼[X_(t+k)|X_t, X_(t-1), ...]\
+  &= cancel(𝔼[ε_(t+k)|X_t, X_(t-1), ...] + ψ_1 𝔼[ε_(t+k-1)|X_t, X_(t-1), ...] + …) wide wide && ⇐ #mref("eq:2_residual_expectation")\
+  &quad + ψ_k 𝔼[ε_(t)|X_t, X_(t-1), ...] + ψ_(k+1) 𝔼[ε_(t-1)|X_t, X_(t-1), ...] + …\
+  &= ψ_k ε_(t) + ψ_(k+1) ε_(t-1) + …\
+
+$
+
+Using our previous definition of the prediction error, @eq:2_1_prediction_error, we find:
+$
+  hat(ε)_(t+k|t)
+    &= X_(t+k) - hat(X)_(t+k)\
+    &= ε_(t+k) + ψ_1 ε_(t+k-1) + … + cancel(ψ_k ε_(t) + ψ_(k+1) ε_(t-1) + …)\
+    &quad cancel(-(ψ_k ε_(t) + ψ_(k+1) ε_(t-1) + …))\
+    &= ε_(t+k) + ψ_1 ε_(t+k-1) + … + ψ_(k-1) ε_(t+1)
+$ <eq:2_prediction_error_k>
+
+Where the variance of this prediction error at time $t+k$ is given by:
+$
+  σ^2_(k)
+  &= Var(hat(ε)_(t+k|t))\
+  &= Var(ε_(t+k) + ψ_1 ε_(t+k-1) + … + ψ_(k-1) ε_(t+1))\
+  &= Var(ε_(t+k)) + ψ_1^2 Var(ε_(t+k-1)) + … + ψ_(k-1)^2 Var(ε_(t+1))\
+$
+
+We consider that $hat(ε)_(t+k|t) ∼ 𝒩(0, σ^2_ε)$ and thus find $Var(ε_(t+k)) = σ^2_ε$ for all $k>0$.
+Plugging this into @eq:2_prediction_error_k yields:
+$
+  σ^2_(k) = σ^2_ε (1 + ψ_1^2 + … + ψ_(k-1)^2)
+$
+
+This enables us to calculate the $(1-α)$ confidence interval of our $k$-step predictions:
+$
+  hat(X)_(t+k|t) ± u_(α\/2) σ_(k)
+  = hat(X)_(t+k|t) ± u_(α\/2) σ_ε sqrt(1 + ψ_1^2 + … + ψ_(k-1)^2)\
+$ <eq:2_prediction_interval>
+
+Where $u_(α\/2)$ is the $α\/2$ quantile of the standard normal distribution.
+For $α = 5%$ we find $u_(α\/2) ≈ 1.96$.
+
+With this, we are able to calculate the prediction intervals for our forecasted data
+using by leveraging the expression for the weights $ψ_i$ in @eq:2_ma_weights,
+which yields the 95% prediction intervals shown in @fig:2_3_forecast_ci.
+
+#figure(
+  image("output/2_3_forecast_ci.png"),
+  caption: [Twelve month forecast using model given in @eq:2_seasonal_ar with 95% prediction intervals.]
+) <fig:2_3_forecast_ci>
+
+We note that the for $1 <= k <= 11$ the seasonal component does not contribute to the prediction error
+as also hinted in the assignment description,
+but for $k=12$ we find a linear dependence on the coefficient of the seasonal component. $Φ_1$.
+This is a significant difference when contrasted against not including the seasonal component.
+
+
+== Forecast Commentary
+
+We consider the forecast found in @fig:2_3_forecast_ci to be a relatively accurate description
+of the expected power generation of the solar plant during the year of 2011.
+In the original dataset we observe a slight decline in the peak power generation as a function of time,
+which is also observed in the forecast.
+This can be attributed to expected degradation of the photo-voltaic solar panels over time.
+
+Notably, the prediction intervals are not symmetric over the expected value,
+which is a result of the non-linear transformation of the data as described in @eq:2_transformations.
+
+Additionally, we observe that the prediction intervals are quite wide,
+which again can be understood in part by referring to the exponential transformation of the data.
+Additionally we observe large variations in the shape of the observations of the 3 year history of the solar plant,
+which pushes up the estimated variance of the residuals, $σ_ε^2 = 0.22^2$.
+This strongly influences the width of the prediction intervals, which is particularly notable
+at power generation observations due to the transformation.
+This is simply a consequence of linearising the data in order to fit it to our linear model.
+
+From inspection, we find that the prediction intervals are likely too wide during the summer months
+where power generation is at its peak,
+due to the overly large effect of the variance during the winter months on the residual error estimates.
+
+The implementation of the prediction intervals can be found in the attached Jupyter Notebook `JK_2.ipynb`.
+
+= An ARX Model for the Heating of a Box <sec:3>
+
+We are given a data set of hourly measurements from a box instrumented with a heater,
+an internal temperature sensor and an external temperature sensor.
+
+The box has window on its south-facing wall, onto which the vertical solar radiation is also recorded in the data set.
+
+The internal temperature of the box was kept approximately constant using a thermostatic control of the internal heater.
+
+
+== Exploratory Dependency Analysis <sec:3_1>
+
+We load the data set and seek to visually explore the dependency between the heater power $P_h$, temperature delta between inside and outside, $Δ T$, and the vertical solar radiation $G_v$.
+
+For the purposes of visualisation, we standardize the data by subtracting the mean and dividing by the standard deviation,
+which we then plot in @fig:3_1_analysis.
+
+#figure(
+  image("output/3_1_analysis.png"),
+  caption: [Standardized data set of heater power $P_h$, temperature delta $Δ T$ and vertical solar radiation $G_v$.]
+) <fig:3_1_analysis>
+
+@fig:3_1_analysis clearly shows an inverse relationship between the heater power and solar radiation,
+as we would intuitively expect on physical grounds – for a constant temperature difference, we would expect the sum of the heater power and solar radiation to be constant, thus requiring the heater to compensate for any changes in solar heating.
+
+We additionally observe a positive correlation between the heater power and the temperature difference,
+which again matches our physical understanding that a larger temperature difference would lead to a larger heat loss from the box, assuming the inside temperature is larger than the external temperature. Thermostaticity would then require a larger heater power to compensate for the increase in heat loss.
+
+== Test/Train Split <sec:3_2>
+
+We now split the dataset into two parts, one for training and one for testing.
+The cut-off point is set to 2013-02-06 00:00, which is the last observation of the training set.
+
+== Further Dependency Investigation <sec:3_3>
+
+Following on from the investigation in @sec:3_1,
+we plot the three variables against each other in the pair plots found in @fig:3_3_pairplot.
+
+#figure(
+  image("output/3_3_pairplot.png"),
+  caption: [Pair plot of the training data set.]
+) <fig:3_3_pairplot>
+
+In @fig:3_3_pairplot we again observe that the heater power $P_h$ and the temperature difference $Δ T$ are positively correlated, with the heater power being larger when the temperature difference is larger.
+Interestingly, we find that the temperature difference as a function of the heater power roughly follows
+one of two lines, which we can further understand when inspecting the pair plot between the temperature difference and the solar radiation $G_v$, which appears to be roughly bimodal.
+This does not lend itself to immediate interpretation, but does suggest that there is an underlying structure in
+the data that may be elucidated with further analysis.
+
+Additionally, we confirm the observation from @sec:3_1 that the heater power and solar radiation $G_v$ are negatively correlated.
+
+Additionally we plot the autocorrelations and cross-correlations in a similar matrix to the one found in @fig:3_3_pairplot,
+which reveals characteristic timescales for the three variables and their correlations.
+
+#figure(
+  image("output/3_3_acf_ccf.png"),
+  caption: [Autocorrelation and cross-correlation of the training data set.]
+) <fig:3_3_acf_ccf>
+
+In @fig:3_3_acf_ccf we find a seasonality of approximately 24 hours in the heater power $P_h$
+and solar radiation $G_v$, which we would expect from the diurnal solar cycle.
+
+The temperature difference does not follow this pattern, partly because it has a much longer timescale in the data set.
+This could be attributed to more complex weather patterns, such as different wind patterns or nightly cloud cover.
+The characteristic timescale of the autocorrelation function of the temperature difference
+reveals that the external temperature varies rather slowly compared to the other two variables.
+
+The inverse relationship between solar radiation and heater power is also confirmed in the cross-correlation plot,
+where we find a negative correlation between the two variables.
+We find only a small correlation between the temperature difference and the solar radiation.
+
+Lastly, we inspect the partial autocorrelation functions of the three variables in @fig:3_3_pacf.
+
+#figure(
+  image("output/3_3_pacf.png"),
+  caption: [Partial autocorrelation of the training data set.]
+) <fig:3_3_pacf>
+
+Comparing @fig:3_3_pacf with the ARMA order identification table, @table:order_identification, we
+find that the heater power $P_h$ and temperature difference $Δ T$ may be well described
+by an AR(2) process, while the solar radiation $G_v$ appears to be well described by an AR(1) process.
+
+The heater power $P_h$ and solar radiation $G_v$ additionally show evidence of seasonality, suggesting
+a seasonality of 24 hours may be appropropriate for modelling their behaviour.
 
 #figure(
   table(
@@ -135,159 +446,10 @@ we refer to Table 6.1 in @Madsen_2008[p.~155], which we reproduce here:
   caption: [Reproduction of Table 6.1 from @Madsen_2008[p.~155] showing the expected behaviour of the autocorrelation function for different ARMA processes],
 ) <table:order_identification>
 
-==
+TODO ELABORATE ON WHAT THIS DOES NOT SHOW?
 
-#figure(
-  image("output/plot_2_1.png"),
-  caption: [Simulated AR(1) process with $ϕ_1 = 0.6$.],
-) <fig:2_1>
+== Impulse Response
 
-In @fig:2_1 we note the exponential decay of the autocorrelation function and single significant value in the partial autocorrelation function.
-We also find that the exponential decay of the autocorrelation function matches the
-expected shape from @eq:1_autocorrelation_recursion.
-
-==
-
-#figure(
-  image("output/plot_2_2.png"),
-  caption: [Simulated Seasonal AR(1) process with seasonality $s=12$ and $Φ_1 = -0.9$.]
-) <fig:2_2>
-
-In @fig:2_2 we note that the autocorrelation function is periodic with period $s=12$ while still decaying exponentially. Because of the negative sign of $Φ_1$ we find that the value of $ρ(k)$ cycles around $0$.
-
-Additionally, we find that the significant point in the partial autocorrelation function has shifted to $k=12$. Additional points sticking out of the confidence interval are assumed to be statistical noise as would be expected with a confidence level $p=0.05$.
-
-==
-
-#figure(
-  image("output/plot_2_3.png"),
-  caption: [Simulated Seasonal ARMA process with seasonality $s=12$ and parameters $ϕ_1 = 0.9$ and $Θ_1 = -0.7$.]
-) <fig:2_3>
-
-Referring to @fig:2_3, we note that the AR part of the process contributes to a single significant value in the partial autocorrelation function at $k=1$ that is then convolved with a decaying 'Dirac brush' with periodicity $s=12$.
-
-The autocorrelation function can be observed to decay away as expected for the AR(1) part of the model,
-but interestingly also exhibits some periodicity with period $s=12$ arising from the MA(1) seasonal component.
-
-==
-
-#figure(
-  image("output/plot_2_4.png"),
-  caption: [Simulated Seasonal AR process with seasonality $s=12$ and parameters $ϕ_1 = -0.6$ and $Φ_1 = -0.8$.]
-) <fig:2_4>
-
-The picture emerging from @fig:2_4 gets more muddied for this more complex model, though using @table:order_identification we would expect the autocorrelation function to have a exponentially decaying sine envelope that is repeated every $s=12$ observations, also decaying for each repetition.
-
-For the partial autocorrelation we would expect to see a single significant value at $k=1$ and then additional significant values around $k=12$. Due to the interaction between the regular and seasonal AR(1) processes, we would expect there to be several significant values, though the exact number is difficult to deduce using intuition alone.
-
-==
-
-#figure(
-  image("output/plot_2_5.png"),
-  caption: [Simulated Seasonal MA model with seasonality $s=12$ and parameters $θ_1=0.4, Θ_1=-0.8$.]
-) <fig:2_5>
-
-From @table:order_identification we find that we would expect an exponential decay of the partial autocorrelation function for an MA(q) process with a limited number of significant values in the autocorrelation function, which is also reflected by @fig:2_5.
-With moderate difficulty we observe a single significant value in the initial part of the autocorrelation function as we would expect from the regular MA(1) process. This is then repeat once around $k=12$ by the seasonal MA(1) process. We note that both the $k=0$ and $k=1$ values from the regular MA(1) process are convolved with the single expected peak from the seasonal MA(1) process to produce 3 significant values at $k∈{11, 12, 13}$.
-
-The parital autocorrelation function is more difficult to interpret, but here we would expect
-a decaying exponential envelope, potentially over a sine function.
-While the the _inner_ exponential function understood to arise from the regular MA(1) process with $θ_1=0.4$ decays very quickly as observed around $k=1$, we observe the expected periodicity of $s=12$ effectuated by the seasonal MA(1) component.
-
-==
-
-#figure(
-  image("output/plot_2_6.png"),
-  caption: [Simulated Seasonal ARMA model with seasonality $s=12$ and parameters $θ_1 = -0.4, Φ_1=0.7$.]
-) <fig:2_6>
-
-Lastly, in @fig:2_6 we observe an exponential decay in the partial autocorrelation function which we attribute to the regular MA(1) progress. We also observe it repeated at $k=12$, though not at $k=24$, as would be expected by the AR(1) seasonal component.
-
-In the autocorrelation function we find a decaying exponential envelope over a 3-element sequence of alternating signs repeated at $k=12$ and $k=24$, which again is
-consistent with the rules outlined in @table:order_identification.
-
-== Summary of Identifications
-
-We have perhaps cheated a bit by using the rules from @table:order_identification to identify the processes, as the conclusions outlined in @table:order_identification should have been
-deduced and presented here.
-
-However, we can add additional commentary - for instance, we realise that more complex processes would be very difficult to identify simply by inspection of the autocorrelation and partial autocorrelation functions. Instead, we propose that a model is iteratively built in order to identify the parameters of such processes. Here a single AR(1) or MA(1) model may be extended appropriately by first fitting the model to a realisation of the process and then inspecting the residuals for any remaining autocorrelation. A new simple model may be fit on the residuals and combined with the original model to construct a better fitting model, which may then again be improved iteratively by inspection of the residuals.
-
-The seasonality parameter will generally be relatively easy to deduce from autocorrelations, especially if the process only features a single periodicity with little variance in the periods.
-
-Overall it is probably best to use parameter estimation techniques. In a
-real world scenario, one would likely have the time-series as actual
-data and not just as a plotted graph. There are two main ways to
-estimate especially $phi.alt$ and $theta$ for ARMA models:
-
-+ OLS regression for AR models
-  $upright(bold(hat(phi.alt))) = (X^T X)^(- 1) X^T upright(bold(y_(t - k)))$
-  with a feature matrix X constructed from the $t - k$ to the $t - N$ th
-  samples, with order of the AR model $k$
-+ MLE for MA models to estimate $upright(bold(hat(theta)))$ based on a
-  likelihood function that assumes Gaussian $upright(bold(epsilon))_t$
-
-Since none of the given model display any trends, but rather are all
-stationary, a de-trending via differencing on real world data may be
-appropriate. Otherwise combining a standard trend model like OLS, RLS or
-WLS as a prior model, could be useful.
-
-
-= Identifying ARMA(p,q) Models <sec:3_arma_identification>
-
-Now, using the rules established and tested in @sec:2_simulating_seasonal_processes,
-we are able to infer the order of the 3 processes presented in the assignment description.
-
-Additionally, we use the same function used to generate the realisations in @sec:2_simulating_seasonal_processes to inspect a realisation of the proposed ARMA structure for each of the 3 given processes.
-
-We note that we are informed that the processes are ARMA(p,q) models
-and as such not expected to feature any seasonal or differencing components.
-
-== Process 1
-
-In the given plots of the first process, we observe no significant values in the autocorrelation nor partial autocorrelation function. As such, we conclude that the process is an ARMA(0,0) process, which is equivalent to a white noise process. From the timeseries plot, we find that the variance is likely unitary. Recreating a realisation of such a process, we obtain @fig:3_1.
-
-#figure(
-  image("output/plot_3_1.png"),
-  caption: [Simulated ARMA(0,0) process with $ε_t ∼ 𝒩(0, 1)$]
-) <fig:3_1>
-
-== Process 2
-
-For the second process we find two significant values in the partial autocorrelation function
-and a double-exponential decay in the autocorrelation function, which we immediately identify as an ARMA(2,0) process in accordance with @table:order_identification.
-
-A realisation of such a process is shown in @fig:3_2.
-
-#figure(
-  image("output/plot_3_2.png"),
-  caption: [Simulated ARMA(2,0) process with $ϕ_1 = 0.45, ϕ_2 = 0.3$]
-) <fig:3_2>
-
-== Process 3
-
-The third process is rather more difficult to identify.
-Squinting slightly, we find the autocorrelation function to appear as if it is decaying
-exponentially with two distinct characteristic decay constants, which would suggest an AR order of $p=2$. Finding the envelope of the absolute partial autocorrelation function to resemble a decaying exponential, we find that the MA order may be $q=1$.
-
-The cyclical nature of the partial autocorrelation function suggests that one of the autoregressive parameters must be negative.
-
-Fiddling a bit with the magnitude of the parameters, we obtain @fig:3_3, which matches the the plot of the third process in the assignment description well.
-
-#figure(
-  image("output/plot_3_3.png"),
-  caption: [Simulated ARMA(2,1) process with $ϕ_1 = 1.1, ϕ_2 = -0.2, θ_1 = 0.9$]
-) <fig:3_3>
-
-
-=== Commentary:
-
-In addition, it would be a good idea to start some residual analysis on the given models. As mentionend in Ex 2.7: in a real world scenario, we would have a time-series as actual data.
-
-The main difficulty is the estimate the order of models, so the parameters $(p,d,q)$. From there, building a model can be started done by fitting and identifying parameters numerically.
-Ideally, we can start with models of lower order, thus lower complexity and then analyse the residuals between model and data. As metrics, we suggest AIC and BIC, as those also penalize complexity of a model, which prevents overfitting. This will be especially useful when combining with regression methods (OLS, WLS, RLS).
-
-Furthermore, the given chart indicates some notion of auto-regressive seasonality. Yet, the period of seasonality would be too long to actually fit a model of reasonable complexity (as the ACF and PACF do not allow estimations for such long periods; we are talking about 100 periods towards the end of the series).
-Therefore, we stick to the simpler ARMA(2,0,1) model. As it does fit the model well.
+TODO
 
 #bibliography("report.bib")
