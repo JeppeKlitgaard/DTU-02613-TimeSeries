@@ -448,7 +448,34 @@ a seasonality of 24 hours may be appropropriate for modelling their behaviour.
 
 TODO ELABORATE ON WHAT THIS DOES NOT SHOW?
 
+== ARX Models
+
+In this section, we will be working a different flavours of ARX models (extended auto-regressive models), thus it is key, to define a common notation especially for the eXogenous variables.
+
+Therefore, our clear and generic notation for ARX models with
+multiple exogenous variables:
+
+$ upright("AR") (p) - upright("X") (e_1 \, e_2 \, . . .) $
+
+where $p$ is as in most literature, the order of the AR part of the
+model, $e_1$ is the order of the first exogenous variable, $e_2$ the
+order of the second exogenous variable and so on. Formally, we have:
+
+$ Y_t = c - sum_(i = 1)^p phi.alt_i Y_(t - i) + sum_(i = 0)^(e_1) omega_(1 \, i + 1) X_(1 \, t - i) + sum_(i = 0)^(e_2) omega_(2 \, i + 1) X_(2 \, t - i) + . . . + epsilon_t $
+
+
 == Impulse Response
+
+== Model Selection (3.5 - 3.8)
+
+=== One-Step Predictions & RMSE (3.8)
+
+When producing one-step predictions, a critical factor is to mind the burn-in period. As the model parameters are re-fitted at each step of the prediction, taking into account the new predicted values of the series, in the first few steps, there is little data to fit on. Thus, the predictions are not very strong. This is called the burn-in period.
+
+As we must give one-step predictions on the test-dataset (which is already quite few observations), it makes sense to include some of the last observations of the train-dataset, to counter the burn-in.
+This way, there is hopefully not much of an impact on the predictions of the test-dataset. Therefore, we include the last 7 samples/observations of the train-dataset into the design matrix $X$ for the one-step predictions.
+
+Further, it would be a more fair comparison to the previous exercises, as those are OLS fitted on the entire train-dataset, thus do not suffer from a burn-in, as do one-step predictions.
 
 TODO
 
