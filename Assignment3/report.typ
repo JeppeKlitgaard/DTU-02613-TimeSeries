@@ -473,9 +473,45 @@ $ Y_t = c - sum_(i = 1)^p phi.alt_i Y_(t - i) + sum_(i = 0)^(e_1) omega_(1 \, i 
 When producing one-step predictions, a critical factor is to mind the burn-in period. As the model parameters are re-fitted at each step of the prediction, taking into account the new predicted values of the series, in the first few steps, there is little data to fit on. Thus, the predictions are not very strong. This is called the burn-in period.
 
 As we must give one-step predictions on the test-dataset (which is already quite few observations), it makes sense to include some of the last observations of the train-dataset, to counter the burn-in.
-This way, there is hopefully not much of an impact on the predictions of the test-dataset. Therefore, we include the last 7 samples/observations of the train-dataset into the design matrix $X$ for the one-step predictions.
+This way, there is hopefully not much of an impact on the predictions of the test-dataset. 
+Additionally, this would also be a more fair comparison to the previous exercises, as those are OLS fitted on the entire train-dataset, thus do not suffer from a burn-in, as do one-step predictions.
 
-Further, it would be a more fair comparison to the previous exercises, as those are OLS fitted on the entire train-dataset, thus do not suffer from a burn-in, as do one-step predictions.
+To test out, how much of a spill from the train-dataset we need, we can check fitting the one-step prediction on *only* the test-data. 
+
+INSERT FIGURE
+
+The decision rule on how much burn-in we grant the model is: Increase the burn-in $b$ (meaning, exclude the first $b$ observations and predictions) until there are no more negative values in the one-step predictions of $P_h$. This is a context based rule, as negative wattage for the heater, the variable $P_h$ represents, does not make sense.
+The FIGURE shows the results for $b=11$. Therefore, we include the last 11 samples/observations of the train-dataset into the design matrix $X$ for the one-step predictions.
+
+Now including 11 samples from the train-data as spill over, we observe the following:
+
+On the new concatenated series, we really only need $b ≥ 6$ to not have absurd values in $P_h$ (negative or >1000), BUT with $b=8$, we now effectively have 64 one-step predictions as asked for in the task.
+
+We added 11 samples from the training data to the 64 samples of the test-data. So we fitted step-wise on a total of 64+11=75 observations. Now we allow a burn-in of 8 and remain with 64 one-step samples... so $64+11-8=64$?!
+
+That begs the questions: Where have the 3 samples gone lost?
+
+- the highest model order of 2 for the AR(2)-X(2,2) swallows 2 samples
+  in padding/cutting of the series
+- 1 samples is swallowed by the process of one-step predictions, since
+  we always look one sample back for $hat(y_(t \| t - 1))$
+- in fact, out of 64 test-data samples, we would only get 63 one-step
+  predictions, as we need to start ON the 2nd sample (t=2) to fit the
+  model on the 1st sample at:
+  $hat(y_(t \| t - 1)) = hat(y_(2 \| 2 - 1)) = hat(y_(2 \| 1))$
+- otherwise we would hit $t - 1 = 0$ which is not feasible
+
+- therefore the RMSE formula given in the task is actually incorrect, as it averages over 3 more values than there are one-step predictions available (64 test-data samples; 3 casualties, 2 for model order and 1 for OS-predictions)
+- that is not even considering a burn-in!
+- hence the effective number of observations fair for comparison to the previous models is much lower than 64
+- please, fucking think about what you write Peder, at least 64 fucking times, before you confuse the shit out of people for hours!
+
+Reflecting upon the question: Does this yield the same model selection as via the AIC, BIC metrics / criteria?
+
+Yes and no. Only going via the RMSE, we could conclude from the first approach, where we only used pure test-dataset samples, that we should select the AR(2)-X(2,2) model.
+However, after adjusting the setting (to have a spill of samples from the train-dataset) for a technically more fair comparison, the RMSE would yield the conclusion to select the AR(1)-X(1,1).
+However, to put this into perspective, the RMSE is overall much lower with the second modelling approach. This makes sense makes sense, since there is much more information available to the model. This lets us conclude that there is a lot of relevant information in the further past. 
+Yet, there seems to be a notion that a model with shorter lag, an AR(1) component, captures this better than a longer lag. This could be interpreted as that past information is overall valuable, but the series behaviour is ultimately very short-term oriented.
 
 TODO
 
