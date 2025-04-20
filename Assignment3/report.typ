@@ -478,7 +478,7 @@ $<eq:3_4_context_arx>
 
 for both as exogenous, given parameters/coefficients $phi.alt_i \, beta_i \, omega_i in bb(R)$.
 
-Now the instructions are very unclear, because an impulse response needs a system for which it is calculated. It is neither indicated what the ARX model order $p$ should be, neither the order of the exogenous series (i.e. which values do we choose for $e_1, e_2$).
+Now the instructions are not entirely clear, because an impulse response needs a system for which it is calculated. It is neither indicated what the ARX model order $p$ should be, neither the order of the exogenous series (i.e. which values do we choose for $e_1, e_2$).
 Due to ambiguation throughout the course and this assignment, it is also unclear what is referred to by "up to lag 10". This could refer to the lagged samples of the modeled series $P_t$, hence the AR components, or it could refer to the depth of recursion for the impulse response function.
 Further it is unknown from which of the exogenous variables, $G_t$ or $T_t$ the unit impulse should come from.
 
@@ -506,14 +506,28 @@ $<eq:3_4_ir_recursion>
 In sum notation this would be with $upright("IRF")(0) = 1 omega_1 + 0 beta_1$ set as initial value:
 
 $
-  upright("IRF")(k) = sum_(i=1)^k sum_(j=0)^(min(i,p)) phi.alt_j upright("IRF") (i-j-1) bb(I)_(i-j-1≥0)
-$
+  upright("IRF")(k) = sum_(i=1)^k sum_(j=0)^(min(i,p)) [ phi.alt_j upright("IRF") (i-j-1) bb(I)_(i-j-1≥0) ]
+$<eq:3_4_ir_summation>
 
 for $k in bb(N)$ the lag and $p$ the AR model order.
 
 Having such a relatively complex model, there is no way to "estimate" it with sufficient accuracy. One could potentially read-off maybe the first two $phi.alt_1, phi.alt_2$ parameters of the AR part via an ACF and PACF plot to conclude that the $phi.alt_i$ coefficients are all $|phi.alt_i|<1$. Maybe even find an argument for an alternating sign of he coefficients, based on the PACF plot. However, none of this will yield a usable result. Thus, we need to actually fit the model to the data. 
 
 We will use the the ```AutoReg```class from ```statsmodels.tsa.ar_model``` in Python, which allows to provide an exogenous variable and has built in parameter estimation (via OLS and conditional MLE).
+To double check, we also did our own classic OLS fit on the design matrix:
+
+$
+  X = [1, P_(t-1), P_(t-2), P_(t-3), ..., P_(t-10), T_t, G_t]
+$
+
+noted in the form of column vectors of the corresponding series, which yields a parameter vector of $Theta = [c, - phi.alt_1 ..., - phi.alt_(10), omega_1, beta_1]^T in bb(R)^(p+2)$.
+
+$  
+  arrow.r.double &  & P_(t - k) & = X dot.op Theta + epsilon_t = Y \
+  arrow.l.r.double &  & hat(Theta) & = (X^T X)^(- 1) X^T Y \
+$<eq:3_4_ols_parameter_est_ar10_x1_1>
+
+The resulting parameters are given as:
 
 #figure(
   table(
@@ -521,12 +535,64 @@ We will use the the ```AutoReg```class from ```statsmodels.tsa.ar_model``` in Py
     table.header($c$, $phi.alt_1$, $phi.alt_2$, $phi.alt_3$, $phi.alt_4$, $phi.alt_5$, $phi.alt_6$, $phi.alt_7$, $phi.alt_8$, $phi.alt_9$, $phi.alt_(10)$, $omega_1$, $beta_1$),
     [3.3073], [0.3294], [0.0069], [-0.0176], [0.086], [0.0124], [0.0308], [0.0171], [-0.0191], [0.0081], [-0.0022], [2.0537], [-0.0925], 
   ),
-  caption: [AR(10)-X(1,1) coefficients],
+  caption: [AR(10)-X(1,1) coefficients with $T_d$ and $G_v$ exogenous of order 1],
 ) <table:3_4_irf_arx_coeff>
+
+Now we can calculate the impulse response via the recursive or the short-sum notation above as in @eq:3_4_ir_summation. 
+
+#figure(
+  image("output/3_4_impulse_response_Tt.png"),
+  caption: [Impulse Response of the AR(10)-X(1,1) with the unit impulse from $T_d$]
+) <fig:3_4_ir_Tt>
+
+If the phrasing "Present it for both variables" is interpreted as presenting the impulse response with a unit impulse from both variables separately, we can give a second plot of just an impulse from $G_v$:
+
+#figure(
+  image("output/3_4_impulse_response_Gv.png"),
+  caption: [Impulse Response of the AR(10)-X(1,1) with the unit impulse from $G_v$]
+) <fig:3_3_ir_Gv>
+
+As already explained based on @fig:3_1_analysis, the two impulse responses counter-act. The IR (impulse response) for this model decays rather quickly, especially with the impact of an exogenous variable that is reciprocal to the target variable. Most of these effects were already assumed based on available information.
+
+We can interpret, that the model with order $10$ is rather robust to unit shocks from both exogenous variables. As a consequence, with this model, we can accept a certain degree of fluctuation in the exogenous variables, without having to worry about a big impact on the predictive performance of our model. For example, the effect of a measurements error or sensor defect in $T_d$ or $G_v$ that acts as a shock to our system, will not last for very long.
+Thus, having a larger order for the AR part of our model pretects against shocks from the other variables. On the other hand, the model is more vulnerable to sudden changes in auto-regressive behaviour.
 
 == Model Selection (3.5 - 3.8)
 
-=== One-Step Predictions & RMSE (3.8)
+In this section, we will stick to the notation convention for ARX models introduced above and create a selection of models for comparison.
+
+=== Linear Regression
+
+For the simple linear regression (OLS) model we have:
+
+$
+  P_t = omega_1 T_t + beta_1 G_t + epsilon_t
+$<eq:3_5_ols_model>
+
+with the design matrix: $X = [T_t \, G_t]$ for the column-vectors
+and with $Theta = [omega_1 \, beta_1]^T$ as parameter vector. The estimation (fitting the model) for $hat(Theta)$ will be analogous to @eq:3_4_ols_parameter_est_ar10_x1_1.
+
+The resulting parameters are $hat(Theta) = [3.8948 \, -0.1099]^T$ with a corresponding RMSE of $approx 69.87$. Thus we have our linear regression predictions as $X dot.op hat(Theta) = hat(P_t)$.
+Further we can shall do one-step predictions (as in @sec:3_8_OSPred_RMSE), which is a way of iteratively re-fitting the model. It is predicting the values of $hat(P_t)$ one step ahead, with the parameters $hat(Theta_(t-1))$ fitted onto the previous time-step, hence, also the design matrix $X_(t-1) = [T_(0, t-1), G_(0,t-1)]$ constructed until the previous time-step. Consequently, for $k=1$:
+
+$
+  hat(P)_(t+k|t) = X_(t+k) dot.op hat(Theta_(t))
+$<eq:3_5_os_pred>
+
+with
+
+$
+  X_(t+k) &= [T_(0, t+k), G_(0,t+k)] quad upright("series from observations 0 to ") t+k
+  hat(Theta_t) &= (X_t^T X_t)^(-1) X_t^T P_t
+  hat(epsilon)_(t) &= P_(t+k) - hat(P)_(t+k|t)
+$
+
+PLOTTING
+
+- observations of PLOTTING
+- need for a transfer function?
+
+=== One-Step Predictions & RMSE (3.8)<sec:3_8_OSPred_RMSE>
 
 When producing one-step predictions, a critical factor is to mind the burn-in period. As the model parameters are re-fitted at each step of the prediction, taking into account the new predicted values of the series, in the first few steps, there is little data to fit on. Thus, the predictions are not very strong. This is called the burn-in period.
 
