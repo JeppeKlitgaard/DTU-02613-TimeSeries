@@ -656,7 +656,7 @@ Here we only consider full OLS estimates and not the one-step predictions (as th
 
 #figure(
   image("output/3_7_aic_bic_model_comparison.png"),
-  caption: [AIC, BIC comparison of different models orders from <sec:3_5_ar0_x1_1>, <sec:3_6_ar1_x1_1>, <sec:3_7_ar2_x1_1>]
+  caption: [AIC, BIC comparison of different models orders from @sec:3_5_ar0_x1_1, @sec:3_6_ar1_x1_1, @sec:3_7_ar2_x1_1]
 ) <fig:3_7_aic_bic_model_comparison>
 
 This is a classic Elbow curve. In various modelling fields, information theoretical measures or straight residual measures (such as MSE, etc.) are plotted against different model variations. The general idea is, to deduce at which point, there is a good trade-off between parameters of the model and the model performance.
@@ -677,7 +677,7 @@ To test out, how much of a spill from the train-dataset we need, we can check fi
 
 #figure(
   image("output/3_8_rmse_model_comparison_only_testdata.png"),
-  caption: [RMSE comparison of different models orders from <sec:3_5_ar0_x1_1>, <sec:3_6_ar1_x1_1>, <sec:3_7_ar2_x1_1> on only the test dataset]
+  caption: [RMSE comparison of different models orders from @sec:3_5_ar0_x1_1, @sec:3_6_ar1_x1_1, @sec:3_7_ar2_x1_1 on only the test dataset]
 ) <fig:3_8_rmse_model_comparison_only_testdata>
 
 The decision rule on how much burn-in we grant the model is: Increase the burn-in $b$ (meaning, exclude the first $b$ observations and predictions) until there are no more negative values in the one-step predictions of $P_h$. This is a context based rule, as negative wattage for the heater, the variable $P_h$ represents, does not make sense.
@@ -687,7 +687,7 @@ Now including 11 samples from the train-data as spill over, we observe the follo
 
 #figure(
   image("output/3_8_rmse_model_comparison_train_test_spill.png"),
-  caption: [RMSE comparison of different models orders from <sec:3_5_ar0_x1_1>, <sec:3_6_ar1_x1_1>, <sec:3_7_ar2_x1_1> on concatenation of train and test dataset]
+  caption: [RMSE comparison of different models orders from @sec:3_5_ar0_x1_1, @sec:3_6_ar1_x1_1, @sec:3_7_ar2_x1_1 on concatenation of train and test dataset]
 ) <fig:3_8_rmse_model_comparison_train_test_spill>
 
 On the new concatenated series, we really only need $b ≥ 6$ to not have absurd values in $P_h$ (negative or >1000), but with $b=8$, we now effectively have 64 one-step predictions as asked for in the task.
@@ -719,6 +719,67 @@ However, after adjusting the setting (to have a spill of samples from the train-
 However, to put this into perspective, the RMSE is overall much lower with the second modelling approach. This makes sense makes sense, since there is much more information available to the model. This lets us conclude that there is a lot of relevant information in the further past. 
 Yet, there seems to be a notion that a model with shorter lag, an AR(1) component, captures this better than a longer lag. This could be interpreted as that past information is overall valuable, but the series behaviour is ultimately very short-term oriented.
 
-TODO
+
+=== k-Step Predictions<sec:3_9_kstep_pred>
+
+We selected the AR(2)-X(2,2) model, mainly because of the AIC, BIC selection criteria. From experience, they produce a very reliable selection process.
+We provide a selection of $k$ step-widths, which are usually choices that would make sense in real-life settings: 12h, 24h, 48h.
+
+#figure(
+  image("output/3_9_kstep_predictions_selection.png"),
+  caption: [k-step predictions for intervals]
+) <fig:3_9_kstep_predictions_selectionl>
+
+Beyond that we look at a plot of the RMSE against the step-width k with the intend to draw some conclusions about the error behaviour over longer periods of prediction. As we already pointed out problems with the residual distribution, this seems reasonable. We also acknowledge, that the allowed burn-in period plays a crucial roll in fitting k-step models, thus we compare them as well.
+
+#figure(
+  image("output/3_9_rmse_kstep_pred.png"),
+  caption: [k-step predictions for intervals]
+) <fig:3_9_rmse_kstep_pred>
+
+As expected, the RMSE reacts heavily to the allowed burn-in. Taking the approach of also allowing a spill of data from the train-dataset, we can afford to accept a longer burn-in period, as we can analogously increase the spillage of data from train-dataset.
+From $b≥9$ the RMSE stays mostly below $5$, which is on most realistic cases acceptable for this problem set-up.
+Nonetheless, there are these devious peaks that display some sort of seasonality for the RMSE over the step-width. How can we explain these?
+
+$P_h$ clearly shows seasonal drops in power (@fig:3_1_analysis). In some intervals however, there are exceptions, where the drop is not as sudden or not as steep.
+
+REWRITE
+- there are a few exceptions to these drops:
+        - between 2013-02-01 and 2013-02-02
+        - between 2013-02-04 and 2013-02-05
+        - between 2013-02-07 and 2013-02-08
+    - the drops are not as sharp
+    - probably the model parameters, when fitted, encode an expectation of seasonality at these exception points as well
+    - as this doesn't happen the model predicts wrong, thus the error peaks
+    - a 2nd explanation would be the weakness of the predictions around the double (inverse) peaks
+        - between 2013-02-02 and 2013-02-03
+        - between 2013-02-06 and 2013-02-07
+
+Overall, the model performs well, the deviations are small, however, the residuals do not look like white noise yet. There is still a visible auto-regressive behaviour present. This could mean, that the model order or structure is not yet sufficient, a more complex model could resolve that.
+Usually, the last option is to increase model complexity, but another argument for that is: The distribution of residuals is patterned. As indicated earlier, the model systematically overshoots for values of $P_h$ in the 'buckle' right after the steep drop of values in @fig:3_7_ar2_x2_2_ols_os and systematically undershoots values for the bottom of the drops.
+
+Apart from the prediction accuracy (which could potentially be improved), in an operational setting the model would work just fine with multi-step predictions. It is not computationally expensive and would be easily integrated into a prediction pipeline.
+Naturally, the further into the future we predict, the higher the uncertainty; that notion is present without calculating the prediction intervals. Beyond that, we saw certain points of the series (towards the drops of $P_h$) where the predictions tend to deviate; FIGURE, the seasonality of the RMSE over $k$ step-width. 
+This does not improve if we simply choose a $k$ step-width, that produces a good RMSE, since we would work on a continually re-fitting real-time prediction pipeline. Hence, by the nature of the series, this point of drop in $P_h$ will naturally come, regardless of the k-step.
+
+Modelling-wise an RLS model with higher "forgetting" coefficient may be a viable option, to account for these know effects.
+
+Given that knowledge on the historic data, it would be wiser to simply accept an increased uncertainty in specific periods of the series and contextualize consequences: Reduce heating at the drops, but also have power available in case of slight mis-predictions.
+
+It could also be an option to reduce the measurement interval from hourly to 5-min intervals, to be able to react quicker and counter prediction uncertainty.
+
+== Conclusions<sec:3_10_conclusions>
+
+*Some Reflections on the model selection process (@sec:3_6_ar1_x1_1 to @sec:3_8_OSPred_RMSE):*
+
+The construction of the selection process via the exercise objectives, makes the selection process not a fair, comparable process, for a number of reasons:
+
+1. The AIC, BIC are calculated on the training dataset, while the RMSE (without our adjustment) is calculated on the test dataset. This would make for a good approach, if the same metric was used, to verify how well the model behaves on different time-slices, basically how well the model generalises. Yet, this is not the case!
+2. two different prediction approaces are used (full OLS fit and step-wise)
+3. The burn-in for one-step or multi-step predictions is not considered.
+4. Too few options for models are considered, the residuals still show auto-regressive behaviour.
+
+We are comparing 2 different metrics (AIC, BIC together as information criteria) on 2 different time slices with 2 different prediction methods. If anything, it is not surprising to get different conclusions.
+Given the drawbacks, this is not a very solid model selection process, comparing apples with pears.
 
 #bibliography("report.bib")
