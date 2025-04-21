@@ -907,34 +907,22 @@ We selected the AR(2)-X(2,2) model, mainly because of the AIC, BIC selection cri
 We provide a selection of $k$ step-widths, which are usually choices that would make sense in real-life settings: 12h, 24h, 48h.
 
 #figure(
-  image("output/3_9_kstep_predictions_selection.png"),
+  image("output/3_9_kstep_predictions_selection_ols.png"),
   caption: [k-step predictions for intervals]
-) <fig:3_9_kstep_predictions_selectionl>
+) <fig:3_9_kstep_predictions_selection>
 
-Beyond that we look at a plot of the RMSE against the step-width k with the intend to draw some conclusions about the error behaviour over longer periods of prediction. As we already pointed out problems with the residual distribution, this seems reasonable. We also acknowledge, that the allowed burn-in period plays a crucial roll in fitting k-step models, thus we compare them as well.
+Beyond that we look at a plot of the RMSE against the step-width k with the intend to draw some conclusions about the error behaviour over longer periods of prediction. 
 
 #figure(
-  image("output/3_9_rmse_kstep_pred.png"),
+  image("output/3_9_rmse_kstep_pred_wo_b.png"),
   caption: [k-step predictions for intervals]
 ) <fig:3_9_rmse_kstep_pred>
 
-As expected, the RMSE reacts heavily to the allowed burn-in. Taking the approach of also allowing a spill of data from the train-dataset, we can afford to accept a longer burn-in period, as we can analogously increase the spillage of data from train-dataset.
-From $b≥9$ the RMSE stays mostly below $5$, which is on most realistic cases acceptable for this problem set-up.
-Nonetheless, there are these devious peaks that display some sort of seasonality for the RMSE over the step-width. How can we explain these?
+As expected, the RMSE reacts heavily to the amount of steps into the future. Naturally, in the beginning there is a huge error in the predictions, as for k-step predictions, we follow a recursive approach, making predictions upon predicted values. For low $k$ this means, there are not many original values of the target series included, resulting in predictions quickly drifting off.
 
-$P_h$ clearly shows seasonal drops in power (@fig:3_1_analysis). In some intervals however, there are exceptions, where the drop is not as sudden or not as steep.
+$P_h$ clearly shows seasonal drops in power (@fig:3_1_analysis). In some intervals however, there are exceptions, where the drop is not as sudden or not as steep. We assume this results in the small buckles in @fig:3_9_rmse_kstep_pred. It is a step width, that goes in phase with the seasonal drops in $P_h$.
 
-REWRITE
-- there are a few exceptions to these drops:
-        - between 2013-02-01 and 2013-02-02
-        - between 2013-02-04 and 2013-02-05
-        - between 2013-02-07 and 2013-02-08
-    - the drops are not as sharp
-    - probably the model parameters, when fitted, encode an expectation of seasonality at these exception points as well
-    - as this doesn't happen the model predicts wrong, thus the error peaks
-    - a 2nd explanation would be the weakness of the predictions around the double (inverse) peaks
-        - between 2013-02-02 and 2013-02-03
-        - between 2013-02-06 and 2013-02-07
+In context the most reasonable k-step intervals, as in @fig:3_9_kstep_predictions_selection, yield reasonable RMSEs until $k≤40$, however, not quite as good as the one-step fits. 
 
 Overall, the model performs well, the deviations are small, however, the residuals do not look like white noise yet. There is still a visible auto-regressive behaviour present. This could mean, that the model order or structure is not yet sufficient, a more complex model could resolve that.
 Usually, the last option is to increase model complexity, but another argument for that is: The distribution of residuals is patterned. As indicated earlier, the model systematically overshoots for values of $P_h$ in the 'buckle' right after the steep drop of values in @fig:3_7_ar2_x2_2_ols_os and systematically undershoots values for the bottom of the drops.
@@ -953,14 +941,11 @@ It could also be an option to reduce the measurement interval from hourly to 5-m
 
 *Some Reflections on the model selection process (@sec:3_5_ar0_x1_1 to @sec:3_7_ar2_x1_1):*
 
-The construction of the selection process via the exercise objectives, makes the selection process not a fair, comparable process, for a number of reasons:
+The construction of the selection process was a step by step increase in model complexity.
 
-1. The AIC, BIC are calculated on the training dataset, while the RMSE (without our adjustment) is calculated on the test dataset. This would make for a good approach, if the same metric was used, to verify how well the model behaves on different time-slices, basically how well the model generalises. Yet, this is not the case!
-2. two different prediction approaces are used (full OLS fit and step-wise)
-3. The burn-in for one-step or multi-step predictions is not considered.
-4. Too few options for models are considered, the residuals still show auto-regressive behaviour.
+The AIC, BIC are calculated on the training dataset, because we needed the log-likelihood. We basically test if AIC and BIC yield generalisable conclusions, hence, if our decision on model complexity paid of for the test dataset.
 
-We are comparing 2 different metrics (AIC, BIC together as information criteria) on 2 different time slices with 2 different prediction methods. If anything, it is not surprising to get different conclusions.
-Given the drawbacks, this is not a very solid model selection process, comparing apples with pears.
+Our addition of the Box-Ljung-Test, fostered the results and contributed to the decision of a more complex model.
+It would be interesting to see, when the tipping point arrives, where additional model complexity is not worth it anymore. In the Elbow plot @fig:3_7_aic_bic_model_comparison we could already see a decreasing gradient.
 
 #bibliography("report.bib")
