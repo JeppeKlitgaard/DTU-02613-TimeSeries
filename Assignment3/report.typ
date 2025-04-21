@@ -204,6 +204,7 @@ $ <eq:2_transformations>
 #figure(
   table(
     columns: data_2_2.at(0).len(),
+    align: (center, right, right),
     table.header([*Time*], [*Power, $bold(Y_t)$ \[MWh*\]], $bold(X_t)$),
     ..data_2_2.slice(1).flatten(),
   ),
@@ -461,8 +462,8 @@ where $p$ is as in most literature, the order of the AR part of the
 model, $e_1$ is the order of the first exogenous variable, $e_2$ the
 order of the second exogenous variable and so on. Formally, we have:
 
-$ 
-Y_t = c - sum_(i = 1)^p phi.alt_i Y_(t - i) + sum_(i = 0)^(e_1) omega_(1 \, i + 1) X_(1 \, t - i) + sum_(i = 0)^(e_2) omega_(2 \, i + 1) X_(2 \, t - i) + . . . + epsilon_t 
+$
+Y_t = c - sum_(i = 1)^p phi.alt_i Y_(t - i) + sum_(i = 0)^(e_1) omega_(1 \, i + 1) X_(1 \, t - i) + sum_(i = 0)^(e_2) omega_(2 \, i + 1) X_(2 \, t - i) + . . . + epsilon_t
 $<eq:3_4_generic_arx>
 
 To further unify notation, we assume a model, where ${ T_t }$ represents the series $T_(upright("delta"))$, ${ G_t }$ is the series $G_v$ and ${P_t }$ is the series $P_h$ for $t in { 1 \, . . . \, 167 }$ in the training dataset.
@@ -473,7 +474,7 @@ To further unify notation, we assume a model, where ${ T_t }$ represents the ser
 There are different options for modelling an impulse response for a model with 2 exogenous variables: $P_t$ with $G_t$ or $G_t$ as exogenous variable, as well as a model for $P_t$ with both as exogenous variables.
 
 $
-upright("AR(p)-X(e1, e2)") = c + sum_(i = 0)^p phi.alt_i B^i P_t + sum_(i = 0)^(e_1) omega_i B^i T_t + sum_(i = 0)^(e_2) beta_i B^i G_t + epsilon_t 
+upright("AR(p)-X(e1, e2)") = c + sum_(i = 0)^p phi.alt_i B^i P_t + sum_(i = 0)^(e_1) omega_i B^i T_t + sum_(i = 0)^(e_2) beta_i B^i G_t + epsilon_t
 $<eq:3_4_context_arx>
 
 for both as exogenous, given parameters/coefficients $phi.alt_i \, beta_i \, omega_i in bb(R)$.
@@ -488,13 +489,13 @@ The unit impulse shall be given from the variabele $T_t$ as @fig:3_3_pairplot sh
 
 Thus the final AR(10)-X(1,1) model becomes:
 
-$ 
-P_t = c - sum_(i = 1)^10 phi.alt_i P_(t-i) + omega_1 T_t + beta_1 G_t + epsilon_t 
+$
+P_t = c - sum_(i = 1)^10 phi.alt_i P_(t-i) + omega_1 T_t + beta_1 G_t + epsilon_t
 $<eq:3_4_ar10_x1_1>
 
 For the impulse response function, we give the unit impulse from $T_t$ and use the recursion
 
-$ 
+$
 upright("IR") (0) & = 0 phi.alt_1+ 1 omega_1 + 0 beta_1\
 upright("IR") (1) & = upright("IR") (0) phi.alt_1 + upright("IR") (0) omega_1 + upright("IR") (0) beta_1 \
 upright("IR") (2) & = upright("IR") (1) phi.alt_1 + upright("IR") (0) phi.alt_2 + 0 omega_1 + 0 beta_1 \
@@ -511,7 +512,7 @@ $<eq:3_4_ir_summation>
 
 for $k in bb(N)$ the lag and $p$ the AR model order.
 
-Having such a relatively complex model, there is no way to "estimate" it with sufficient accuracy. One could potentially read-off maybe the first two $phi.alt_1, phi.alt_2$ parameters of the AR part via an ACF and PACF plot to conclude that the $phi.alt_i$ coefficients are all $|phi.alt_i|<1$. Maybe even find an argument for an alternating sign of he coefficients, based on the PACF plot. However, none of this will yield a usable result. Thus, we need to actually fit the model to the data. 
+Having such a relatively complex model, there is no way to "estimate" it with sufficient accuracy. One could potentially read-off maybe the first two $phi.alt_1, phi.alt_2$ parameters of the AR part via an ACF and PACF plot to conclude that the $phi.alt_i$ coefficients are all $|phi.alt_i|<1$. Maybe even find an argument for an alternating sign of he coefficients, based on the PACF plot. However, none of this will yield a usable result. Thus, we need to actually fit the model to the data.
 
 We will use the the ```AutoReg```class from ```statsmodels.tsa.ar_model``` in Python, which allows to provide an exogenous variable and has built in parameter estimation (via OLS and conditional MLE).
 To double check, we also did our own classic OLS fit on the design matrix:
@@ -522,7 +523,7 @@ $
 
 noted in the form of column vectors of the corresponding series, which yields a parameter vector of $Theta = [c, - phi.alt_1 ..., - phi.alt_(10), omega_1, beta_1]^T in bb(R)^(p+2)$.
 
-$  
+$
   arrow.r.double &  & P_(t - k) & = X dot.op Theta + epsilon_t = Y \
   arrow.l.r.double &  & hat(Theta) & = (X^T X)^(- 1) X^T Y \
 $<eq:3_4_ols_parameter_est_ar10_x1_1>
@@ -533,12 +534,12 @@ The resulting parameters are given as:
   table(
     columns: 13,
     table.header($c$, $phi.alt_1$, $phi.alt_2$, $phi.alt_3$, $phi.alt_4$, $phi.alt_5$, $phi.alt_6$, $phi.alt_7$, $phi.alt_8$, $phi.alt_9$, $phi.alt_(10)$, $omega_1$, $beta_1$),
-    [3.3073], [0.3294], [0.0069], [-0.0176], [0.086], [0.0124], [0.0308], [0.0171], [-0.0191], [0.0081], [-0.0022], [2.0537], [-0.0925], 
+    [3.3073], [0.3294], [0.0069], [-0.0176], [0.086], [0.0124], [0.0308], [0.0171], [-0.0191], [0.0081], [-0.0022], [2.0537], [-0.0925],
   ),
   caption: [AR(10)-X(1,1) coefficients with $T_d$ and $G_v$ exogenous of order 1],
 ) <table:3_4_irf_arx_coeff>
 
-Now we can calculate the impulse response via the recursive or the short-sum notation above as in @eq:3_4_ir_summation. 
+Now we can calculate the impulse response via the recursive or the short-sum notation above as in @eq:3_4_ir_summation.
 
 #figure(
   image("output/3_4_impulse_response_Tt.png"),
@@ -637,7 +638,7 @@ While this model fits a lot tighter, the notion of not capturing the drops and s
 
 Now we want to delve a bit deeper into other metrics for model selection, specifically the BIC (Bayesian Information Criterion) and AIC (Akaike Information Criterion). Generically they are calculated as:
 
-$ 
+$
   upright("AIC") & = - 2 log L (upright(bold(Y)) \| upright(bold(hat(psi)))) + 2 p\
   upright("BIC") & = - 2 log L (upright(bold(Y)) \| upright(bold(hat(psi)))) + p log n\
 $<eq:3_7_aic_bic>
@@ -670,10 +671,10 @@ However, as the AIC and BIC both already punish the increased model complexity o
 When producing one-step predictions, a critical factor is to mind the burn-in period. As the model parameters are re-fitted at each step of the prediction (refer to @eq:3_5_os_pred). Taking into account the new predicted values of the series, in the first few steps, there is little data to fit on. Thus, the predictions are not very strong. This is what we refer to as the burn-in period.
 
 As we must give one-step predictions on the test-dataset (which is already quite few observations), it makes sense to include some of the last observations of the train-dataset, to counter the burn-in.
-This way, there is hopefully not much of an impact on the predictions of the test-dataset. 
+This way, there is hopefully not much of an impact on the predictions of the test-dataset.
 Additionally, this would also be a more fair comparison to the previous exercises, as those are OLS fitted on the entire train-dataset, thus do not suffer from a burn-in, as do one-step predictions.
 
-To test out, how much of a spill from the train-dataset we need, we can check fitting the one-step prediction on *only* the test-data. 
+To test out, how much of a spill from the train-dataset we need, we can check fitting the one-step prediction on *only* the test-data.
 
 #figure(
   image("output/3_8_rmse_model_comparison_only_testdata.png"),
@@ -716,7 +717,7 @@ Reflecting upon the question: Does this yield the same model selection as via th
 
 Yes and no. Only going via the RMSE, we could conclude from the first approach, where we only used pure test-dataset samples, that we should select the AR(2)-X(2,2) model.
 However, after adjusting the setting (to have a spill of samples from the train-dataset) for a technically more fair comparison, the RMSE would yield the conclusion to select the AR(1)-X(1,1).
-However, to put this into perspective, the RMSE is overall much lower with the second modelling approach. This makes sense makes sense, since there is much more information available to the model. This lets us conclude that there is a lot of relevant information in the further past. 
+However, to put this into perspective, the RMSE is overall much lower with the second modelling approach. This makes sense makes sense, since there is much more information available to the model. This lets us conclude that there is a lot of relevant information in the further past.
 Yet, there seems to be a notion that a model with shorter lag, an AR(1) component, captures this better than a longer lag. This could be interpreted as that past information is overall valuable, but the series behaviour is ultimately very short-term oriented.
 
 
@@ -759,7 +760,7 @@ Overall, the model performs well, the deviations are small, however, the residua
 Usually, the last option is to increase model complexity, but another argument for that is: The distribution of residuals is patterned. As indicated earlier, the model systematically overshoots for values of $P_h$ in the 'buckle' right after the steep drop of values in @fig:3_7_ar2_x2_2_ols_os and systematically undershoots values for the bottom of the drops.
 
 Apart from the prediction accuracy (which could potentially be improved), in an operational setting the model would work just fine with multi-step predictions. It is not computationally expensive and would be easily integrated into a prediction pipeline.
-Naturally, the further into the future we predict, the higher the uncertainty; that notion is present without calculating the prediction intervals. Beyond that, we saw certain points of the series (towards the drops of $P_h$) where the predictions tend to deviate; FIGURE, the seasonality of the RMSE over $k$ step-width. 
+Naturally, the further into the future we predict, the higher the uncertainty; that notion is present without calculating the prediction intervals. Beyond that, we saw certain points of the series (towards the drops of $P_h$) where the predictions tend to deviate; FIGURE, the seasonality of the RMSE over $k$ step-width.
 This does not improve if we simply choose a $k$ step-width, that produces a good RMSE, since we would work on a continually re-fitting real-time prediction pipeline. Hence, by the nature of the series, this point of drop in $P_h$ will naturally come, regardless of the k-step.
 
 Modelling-wise an RLS model with higher "forgetting" coefficient may be a viable option, to account for these know effects.
