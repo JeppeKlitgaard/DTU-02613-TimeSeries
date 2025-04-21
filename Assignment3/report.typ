@@ -70,45 +70,201 @@ $
   φ_1 = -ϕ_1, wide φ_2 = -ϕ_2
 $ <eq:1_phi_sign_change>
 
-== Realisations
-
-=== 1.1 & 1.2
-We simulate the given process 5 times using the ```SARIMAX``` module with $n=200$ observations and the coefficients set to: $ϕ_1 = -0.6$ and $ϕ_2 = 0.5$
+== <sec:1_1>
+We simulate 5 realisations of the process up to $n=200$ observations using a burn-in period of $N_B = 10000$ with parameters $ϕ_1 = -0.6$ and $ϕ_2 = 0.5$ and plot the results in @fig:1_1.
 
 #figure(
-  // image("img/blabla.png"),
-  [],
+  image("output/1_1.png"),
   caption: [Simulation and Autocorrelation function of AR(2) process with $ϕ_1 = -0.6, ϕ_2 = 0.5$.],
-) <fig:1_1_sim-acf>
+) <fig:1_1>
 
-- plot Simulation and ACF together
-- plot "empirical" ACF and rho(k) for k lag in {0, ..., 30}
-- comment on the result
+We find that the results look as expected.
 
-=== 1.3
+== <sec:1_2>
 
-- new simulations & ACFs with $ϕ_1 = -0.6$ and $ϕ_2 = -0.3$
-- comment on each, focus on stationarity
+We recall the definition of _autocorrelation_ for a _stationary process_:
+$
+  ρ(k) = γ(k)/γ(0)
+$ <eq:1_autocorrelation>
 
-=== 1.4
+Where $γ(k)$ is the _autocovariance_ for a timeshift $k$:
+$
+  γ(k) = Cov[X_t, X_(t+k)]
+$ <eq:1_autocovariance>
 
-- with $ϕ_1 = 0.6$ and $ϕ_2 = -0.3$
+We consider the autocorrelation of an AR(2) process by solving for $X_t$ in @eq:1_ar2:
+$
+  X_t = -ϕ_1 X_(t-1) - ϕ_2 X_(t-2) + ε_t
+$ <eq:1_ar2_solved>
 
-=== 1.5
+And then inserting this in @eq:1_autocorrelation:
+$
+  ρ(k) = Cov[X_t, X_(t+k)] / γ(0)
+    &= Cov[X_t, -ϕ_1 X_(t-1+k) - ϕ_2 X_(t-2+k) + ε_t] / γ(0)\
+    &= Cov[X_t, -ϕ_1 X_(t-1+k)] / γ(0) + Cov[X_t, -ϕ_2 X_(t-2+k)] / γ(0) + cancel(Cov[X_t, ε_t] / γ(0))\
+    &= -ϕ_1 Cov[X_t, X_(t-1+k)] / γ(0) - ϕ_2 Cov[X_t, X_(t-2+k)] / γ(0)\
+    &= -ϕ_1 γ(k-1) / γ(0) - ϕ_2 γ(k-2) / γ(0)\
+  ρ(k) &= -ϕ_1 ρ(k-1) - ϕ_2 ρ(k-2)\
+$ <eq:1_autocorrelation_recursion>
 
-- with $ϕ_1 = -0.7$ and $ϕ_2 = -0.3$
+Notably by stationary it follows $ρ(-k) = ρ(k)$ and from @eq:1_autocorrelation we find $ρ(0) = 1$,
+which allows us to build a recursive relation for $ρ(k)$ from:
 
-=== 1.6
+$
+  ρ(0) &= 1\
+  ρ(1) &= -ϕ_1 ρ(0) - ϕ_2 ρ(-1) = -ϕ_1 - ϕ_2ρ(1) = (-ϕ_1)/(1+ϕ_2)\
+$ <eq:1_autocorrelation_recursion_2>
 
-- with $ϕ_1 = -0.75$ and $ϕ_2 = -0.3$
+We can compute the empirical autocorrelation function (ACF) using the `plot_acf` function from `statsmodels`,
+which we compute for each of the realisations shown in @fig:1_1.
 
-=== 1.7
+This is plotted in @fig:1_2_acf along with the theoretical autocorrelation function, $ρ(k)$, as given by @eq:1_autocorrelation_recursion_2.
 
-- comment on: is it enough to plot the ACF or is the time-series helpful?
-- ...in @fig:1_1_sim-acf we can see...
+#figure(
+  image("output/1_2_acf.png"),
+  caption: [
+    Theoretical and empirical autocorrelation functions of an AR(2) process with $ϕ_1 = -0.6, ϕ_2 = 0.5$.
+    Shaded blue region is the 95% confidence interval for the empirical ACF.
+  ],
+) <fig:1_2_acf>
+
+We observe good agreement between the theoretical and empirical autocorrelation functions.
+The deviations observed after $k=4$ are results of the finite sample size of the simulation,
+which is also reflected in the shaded blue confidence intervals.
+The damped oscillations of the autocorrelation functions are expected, as also indicated
+in @table:order_identification on #ref(<table:order_identification>, form: "page", supplement: "Page").
+
 
 #pagebreak()
+== <sec:1_3>
 
+We now repeat the simulation with $ϕ_1 = -0.6$ and $ϕ_2 = -0.3$ and plot the results in @fig:1_3 and @fig:1_3_acf.
+
+#figure(
+  image("output/1_3.png"),
+  caption: [Simulation and Autocorrelation function of AR(2) process with $ϕ_1 = -0.6, ϕ_2 = -0.3$.],
+) <fig:1_3>
+
+#figure(
+  image("output/1_3_acf.png"),
+  caption: [
+    Theoretical and empirical autocorrelation functions of an AR(2) process with $ϕ_1 = -0.6, ϕ_2 = -0.3$.
+    Shaded blue region is the 95% confidence interval for the empirical ACF.
+  ],
+) <fig:1_3_acf>
+
+We observe that the process remains stationary, but the characteristic correlation times
+are now much longer than for the previous case in @sec:1_1 and @sec:1_2.
+In @fig:1_3 we can clearly see that variations in the time series are much more pronounced than in @fig:1_1.
+
+#pagebreak()
+== <sec:1_4>
+
+We now repeat the simulation with $ϕ_1 = 0.6$ and $ϕ_2 = -0.3$ and plot the results in @fig:1_4 and @fig:1_4_acf.
+
+#figure(
+  image("output/1_4.png"),
+  caption: [Simulation and Autocorrelation function of AR(2) process with $ϕ_1 = 0.6, ϕ_2 = -0.3$.],
+) <fig:1_4>
+
+#figure(
+  image("output/1_4_acf.png"),
+  caption: [
+    Theoretical and empirical autocorrelation functions of an AR(2) process with $ϕ_1 = 0.6, ϕ_2 = -0.3$.
+    Shaded blue region is the 95% confidence interval for the empirical ACF.
+  ],
+) <fig:1_4_acf>
+
+We again observe that the process is stationary, but find that the sign change in $ϕ_2$ with respect to @sec:1_3 has introduced a fast oscillation in the time series.
+
+We find that for realisations 1 and 3 the autocorrelation does decays slower than expected by
+theory. This is again attributed to the finite sample size of the simulation,
+the artifacts of which become more pronounced for processes with longer characteristic
+correlation times such as the one observed in @fig:1_4.
+
+We propose increasing the number of simulated observations, $n$, to a larger number
+for such processes if the empirical autocorrelation function is to be used for identification
+or interpretation.
+
+#pagebreak()
+== <sec:1_5>
+
+We again repeat the simulation with $ϕ_1 = -0.7$ and $ϕ_2 = -0.3$ and plot the results in @fig:1_5 and @fig:1_5_acf.
+
+#figure(
+  image("output/1_5.png"),
+  caption: [Simulation and Autocorrelation function of AR(2) process with $ϕ_1 = -0.7, ϕ_2 = -0.3$.],
+) <fig:1_5>
+
+#figure(
+  image("output/1_5_acf.png"),
+  caption: [
+    Theoretical and empirical autocorrelation functions of an AR(2) process with $ϕ_1 = -0.7, ϕ_2 = -0.3$.
+    Shaded blue region is the 95% confidence interval for the empirical ACF.
+  ],
+) <fig:1_5_acf>
+
+In figure @fig:1_5 we observe that the process is exactly at the critical point
+of stationarity, where the theoretical autocorrelation function does not decay to zero.
+
+This can be understood by considering the stationarity conditions for an AR(2) process, which
+require that the _roots_, $z_(1,2)$ of the _characteristic polynomial_ lie outside the unit circle, such that $|z_(1, 2)| > 1$.
+
+For the AR(2) process in @eq:1_ar2 the characteristic polynomial is given by:
+$
+  P(z) = 1 + ϕ_1 z + ϕ_2 z^2
+$
+
+Where the roots are then given by:
+$
+  z_(1,2) &= (ϕ_1 ± sqrt(ϕ_1^2 + 4ϕ_2))/(-2 ϕ_2)\
+$ <eq:ar2_roots>
+
+We find:
+$
+  |z_(1,2)| = {1, 3.overline(33)}
+$
+
+Where clearly, $|z_1| = 1 ≯ 1$, violates the strict inequality of the stationarity condition,
+the consequence of which is a process where shocks do not decay away over time.
+
+We note that the process does not explode because we are exactly at the point of criticality.
+
+#pagebreak()
+== <sec:1_6>
+
+Once more we repeat the simulation, this time with $ϕ_1 = -0.75$ and $ϕ_2 = -0.3$ and plot the results in @fig:1_6 and @fig:1_6_acf.
+
+#figure(
+  image("output/1_6.png"),
+  caption: [Simulation and Autocorrelation function of AR(2) process with $ϕ_1 = -0.75, ϕ_2 = -0.3$.],
+) <fig:1_6>
+
+#figure(
+  image("output/1_6_acf.png"),
+  caption: [
+    Theoretical and empirical autocorrelation functions of an AR(2) process with $ϕ_1 = -0.75, ϕ_2 = -0.3$.
+  ],
+) <fig:1_6_acf>
+
+Using @eq:ar2_roots we find:
+$
+    |z_(1,2)| ≈ {0.963, 3.463}
+$
+
+Which reveals that we are decidedly not stationary and the process should blow up
+as time progresses, which is also what we observe in @fig:1_6 and @fig:1_6_acf.
+
+@fig:1_6_acf fails to compute the empirical ACF, while the theoretical ACF diverges quickly.
+
+TODO MORE FAFF
+
+== <sec:1_7>
+
+TODO WRITEUP
+
+
+#pagebreak()
 = Predicting Monthly Solar Power <sec:2_predicting_monthly_solar_power>
 
 We are given a seasonal AR model:
