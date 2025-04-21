@@ -516,6 +516,27 @@ The box has window on its south-facing wall, onto which the vertical solar radia
 
 The internal temperature of the box was kept approximately constant using a thermostatic control of the internal heater.
 
+In this section, we will be working AutoRegressive models with eXogenous variables (ARX),
+for which we will adopt a notation in which $upright("AR")(p)"-"upright("X") (e_1, e_2, …)$ refers to
+an ARX where $p$ determines the order of the AutoRegressive (AR) part of the model while $e_j$ for $j ∈ ℕ_+$ refers to the order of the $j$th exogenous variable $X_j$.
+
+This yields the following generic ARX model:
+
+$
+  Y_t
+    = c
+    - underbrace(sum_(i = 1)^p ϕ_i Y_(t-i), "AR Part")
+    + underbrace(sum_(j = 1)^J sum_(k=0)^(e_j) ω_(j, k) X_(j, t-k), "Exogenous Part")
+    + ε_t
+$
+
+Where $c$ is a constant offset, $ϕ_i$ are the AR coefficients, $ω_(j, k)$ are the exogenous coefficients and $ε_t$ is a white-noise such that $ε_t ∼ 𝒩(0, σ_ε^2)$. $J$ refers to the number of exogenous variables such that $j ∈ {1, 2, …, J}$ become the indices of the exogenous variables.
+
+$
+Y_t = c - sum_(i = 1)^p phi.alt_i Y_(t - i) + sum_(i = 0)^(e_1) omega_(1 \, i + 1) X_(1 \, t - i) + sum_(i = 0)^(e_2) omega_(2 \, i + 1) X_(2 \, t - i) + . . . + epsilon_t
+$<eq:3_4_generic_arx>
+
+To further unify notation, we assume a model, where ${ T_t }$ represents the series $T_(upright("delta"))$, ${ G_t }$ is the series $G_v$ and ${P_t }$ is the series $P_h$ for $t in { 1 \, . . . \, 167 }$ in the training dataset.
 
 == Exploratory Dependency Analysis <sec:3_1>
 
@@ -603,29 +624,21 @@ a seasonality of 24 hours may be appropropriate for modelling their behaviour.
   caption: [Reproduction of Table 6.1 from @Madsen_2008[p.~155] showing the expected behaviour of the autocorrelation function for different ARMA processes],
 ) <table:order_identification>
 
-TODO ELABORATE ON WHAT THIS DOES NOT SHOW?
-
-== ARX Models
-
-In this section, we will be working a different flavours of ARX models (extended auto-regressive models), thus it is key, to define a common notation especially for the eXogenous variables.
-
-Therefore, our clear and generic notation for ARX models with
-multiple exogenous variables:
-
-$ upright("AR") (p) - upright("X") (e_1 \, e_2 \, . . .) $
-
-where $p$ is as in most literature, the order of the AR part of the
-model, $e_1$ is the order of the first exogenous variable, $e_2$ the
-order of the second exogenous variable and so on. Formally, we have:
-
-$
-Y_t = c - sum_(i = 1)^p phi.alt_i Y_(t - i) + sum_(i = 0)^(e_1) omega_(1 \, i + 1) X_(1 \, t - i) + sum_(i = 0)^(e_2) omega_(2 \, i + 1) X_(2 \, t - i) + . . . + epsilon_t
-$<eq:3_4_generic_arx>
-
-To further unify notation, we assume a model, where ${ T_t }$ represents the series $T_(upright("delta"))$, ${ G_t }$ is the series $G_v$ and ${P_t }$ is the series $P_h$ for $t in { 1 \, . . . \, 167 }$ in the training dataset.
-
+Notably, we cannot reasonably estimate the parameters of, for example, an ARX model from the figures above,
+will instead require an outright fitting of the model(s) to the data.
 
 == Impulse Response<sec:3_4_impulse_response>
+
+While the assignment description does not explicitly state the orders of the ARX model,
+which naturally need to be determined prior to carrying out an impulse response analysis,
+we consider an $"AR"(1)"-"X(1, 1)$ model to be a reasonable choice, which is supported by the analysis of the PACF in @fig:3_3_pacf above.
+
+We consider the heater power, $P_h$, to be the _endogenous variable_, while the solar radiation, $G_v$, and temperature difference, $Δ T$, are the _exogenous variables_, which yields the following model:
+$
+  P_t = c + ϕ_1 P_(t-1) + ω_1 T_t + ω_2 G_t + ε_t\
+$
+
+Where parameters $c, ϕ_1, ω_1, ω_2 ∈ ℝ$.
 
 There are different options for modelling an impulse response for a model with 2 exogenous variables: $P_t$ with $G_t$ or $G_t$ as exogenous variable, as well as a model for $P_t$ with both as exogenous variables.
 
