@@ -642,6 +642,8 @@ Where parameters $c, ϕ_1, ω_1, ω_2 ∈ ℝ$.
 
 There are different options for modelling an impulse response for a model with 2 exogenous variables: $P_t$ with $G_t$ or $G_t$ as exogenous variable, as well as a model for $P_t$ with both as exogenous variables.
 
+TODO: I DON'T REALLY UNDERSTAND THIS SENTENCE ↑
+
 $
 upright("AR(p)-X(e1, e2)") = c + sum_(i = 0)^p phi.alt_i B^i P_t + sum_(i = 0)^(e_1) omega_i B^i T_t + sum_(i = 0)^(e_2) beta_i B^i G_t + epsilon_t
 $<eq:3_4_context_arx>
@@ -651,7 +653,17 @@ for both as exogenous, given parameters/coefficients $phi.alt_i \, beta_i \, ome
 Now there are different options how to interpret the phrasing "up to lag 10". This could refer to the lagged samples of the modeled series $P_t$, hence the AR components, or it could refer to the depth of recursion for the impulse response function $upright("IRF")(k)$.
 It is ambiguous from which of the exogenous variables, $G_t$ or $T_t$ the unit impulse should come from. Either from both together or each gives an impulse separately.
 
+<<<<<<< Updated upstream
 Therefore, we need to make reasonable choices for the model. We choose an AR(1)-X(1,1) model (based on the findings in @sec:3_3) with a given lag of of $k=10$ for the impulse response function IRF(k). 
+=======
+TODO: ACTUALLY REREADING THIS, I THINK IT IS SOMEWHAT CLEAR THAT HE WANTS AR(10)-X(1,1) responses wrt TDelta and Gv
+
+TODO: I AGREE THAT IT IS AMBIGUOUS, BUT MAYBE WE NEED TO STATE IN MORE NEUTRAL TONE
+
+Therefore, we need to make reasonable choices for the model. We choose an AR(10)-X(1,1) model with a given lag of of $k=20$ for the impulse response function IR(k). On a training dataset of 167 samples it seems reasonable to plot the impulse response on a sizable lag, to actually see some impact and behaviour.
+An AR order of $p=10$ also seems reasonable to actually have some coefficients that capture the model nuances, without immediately decaying the response.
+The unit impulse shall be given from the variable $T_t$ as @fig:3_3_pairplot shows, it has a positive correlation with the target series $P_t$, while @fig:3_1_analysis clearly indicates, the variable $G_t$ has an inverse relationship with the target $P_t$. This does carry quite valuable information, however, the impulse response will decay extremely fast, when having opposing effects.
+>>>>>>> Stashed changes
 
 While we interpret the task, such that we model two impulse responses, from $G_t$ and $T_t$ separately, the unit impulse given from the variable $T_t$ seems much more meaningful. As @fig:3_3_pairplot shows, it has a positive correlation with the target series $P_t$, while @fig:3_1_analysis clearly indicates, the variable $G_t$ has an inverse relationship with the target $P_t$. 
 Even before estimating anything, we can assume that a unit impulse from $T_t$ will be impactful, while for $G_t$ the response will decay extremely fast, as the original series have opposing effects.
@@ -708,7 +720,12 @@ for $k in bb(N)$ the lag and $p$ the AR model order.
   caption: [Impulse Response of the AR(1)-X(1,1) with the unit impulse from $T_d$]
 ) <fig:3_4_ir_Tt>
 
+<<<<<<< Updated upstream
 Now we give a second plot of a unit impulse from $G_v$:
+=======
+We will use the the `AutoReg` class from `statsmodels.tsa.ar_model` in Python, which allows to provide an exogenous variable and has built in parameter estimation (via OLS and conditional MLE).
+To double check, we also did our own classic OLS fit on the design matrix:
+>>>>>>> Stashed changes
 
 #figure(
   image("output/3_4_ar1_x1_1_impulse_response_Gv.png"),
@@ -738,7 +755,7 @@ Thus, having a larger order for the AR part of our model pretects against shocks
 
 In this section, we will stick to the notation convention for ARX models introduced above and create a selection of models for comparison.
 
-=== Linear Regression<sec:3_5_ar0_x1_1>
+=== Linear Regression <sec:3_5_ar0_x1_1>
 
 For the simple linear regression (OLS) model we have:
 
