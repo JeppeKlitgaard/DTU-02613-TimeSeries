@@ -930,7 +930,7 @@ estimation analogous to @eq:3_4_ols_parameter_est, hence $upright(bold(hat(psi))
 
 #figure(
   image("output/3_7_aic_bic_model_comparison.png"),
-  caption: [AIC, BIC comparison of different models orders from @sec:3_5_ar0_x1_1, @sec:3_6_ar1_x1_1, @sec:3_7_ar2_x1_1]
+  caption: [AIC, BIC comparison of different models orders from @sec:3_5, @sec:3_6, @sec:3_7]
 ) <fig:3_7_aic_bic_model_comparison>
 
 This is a classic Elbow curve. In various modelling fields, information theoretical measures or straight residual measures (such as MSE, etc.) are plotted against different model variations. The general idea is, to deduce at which point, there is a good trade-off between parameters of the model and the model performance.
@@ -940,13 +940,13 @@ If we look at the plot, there is a clear trend towards the more complex AR(2)-X(
 However, as the AIC and BIC both already punish the increased model complexity of AR(2)-X(2,2) model, but still produce a lower score, the interpretation would yield in: "more complex, but worth it". Therefore, the model selection would fall onto the AR(2)-X(2,2) model.
 
 
-=== RMSE metric and Prediction on test-dataset<sec:3_8_RMSE_test_dataset>
+== RMSE metric and Prediction on test-dataset<sec:3_8>
 
-We now use the on the training dataset estimated parameters $hat(Theta)$ and use those for one-step predictions on the test dataset with an accordingly constructed design matrix (refer to @eq:3_6_design_matrix).
+We now use the on the training dataset estimated parameters $hat(Theta)$ and use those for one-step predictions on the test dataset with an accordingly constructed design matrix.
 
 #figure(
   image("output/3_8_rmse_model_comparison.png"),
-  caption: [RMSE comparison of different models orders from @sec:3_5_ar0_x1_1, @sec:3_6_ar1_x1_1, @sec:3_7_ar2_x1_1 on concatenation of train and test dataset]
+  caption: [RMSE comparison of different models orders from @sec:3_5, @sec:3_6, @sec:3_7 on concatenation of train and test dataset]
 ) <fig:3_8_rmse_model_comparison_test>
 
 Reflecting upon the question: Does @fig:3_8_rmse_model_comparison_test yield the same model selection as via the AIC, BIC metrics / criteria?
@@ -955,7 +955,7 @@ Yes. We already observed on the AIC and BIC on the training dataset that higher 
 Now we have validated via RMSE on the test dataset that our model generalises well. The AR(2)-X(2,2) model also performs the best in this setting, showing that we have not overfitted with increasing complexity.
 
 
-=== k-Step Predictions<sec:3_9_kstep_pred>
+== $k$-Step Predictions<sec:3_9>
 
 We selected the AR(2)-X(2,2) model, mainly because of the AIC, BIC selection criteria. From experience, they produce a very reliable selection process.
 We provide a selection of $k$ step-widths, which are usually choices that would make sense in real-life settings: 12h, 24h, 48h.
@@ -965,7 +965,7 @@ We provide a selection of $k$ step-widths, which are usually choices that would 
   caption: [k-step predictions for intervals]
 ) <fig:3_9_kstep_predictions_selection>
 
-Beyond that we look at a plot of the RMSE against the step-width k with the intend to draw some conclusions about the error behaviour over longer periods of prediction. 
+Beyond that we look at a plot of the RMSE against the step-width $k$ with the intend to draw some conclusions about the error behaviour over longer periods of prediction.
 
 #figure(
   image("output/3_9_rmse_kstep_pred_wo_b.png"),
@@ -992,9 +992,9 @@ Given that knowledge on the historic data, it would be wiser to simply accept an
 
 It could also be an option to reduce the measurement interval from hourly to 5-min intervals, to be able to react quicker and counter prediction uncertainty.
 
-== Conclusions<sec:3_10_conclusions>
+== Conclusions <sec:3_10_conclusions>
 
-*Some Reflections on the model selection process (@sec:3_5_ar0_x1_1 to @sec:3_7_ar2_x1_1):*
+*Some Reflections on the model selection process (@sec:3_5 to @sec:3_7):*
 
 The construction of the selection process was a step by step increase in model complexity.
 
