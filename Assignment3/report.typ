@@ -922,14 +922,15 @@ As expected, the RMSE reacts heavily to the amount of steps into the future. Nat
 
 $P_h$ clearly shows seasonal drops in power (@fig:3_1_analysis). In some intervals however, there are exceptions, where the drop is not as sudden or not as steep. We assume this results in the small buckles in @fig:3_9_rmse_kstep_pred. It is a step width, that goes in phase with the seasonal drops in $P_h$.
 
-In context the most reasonable k-step intervals, as in @fig:3_9_kstep_predictions_selection, yield reasonable RMSEs until $k≤40$, however, not quite as good as the one-step fits. 
+In context the most reasonable k-step intervals, as in @fig:3_9_kstep_predictions_selection, yield reasonable RMSEs until $k≤40$, however, not quite as good as the one-step fits. Yet, it does provide the advantage of being able to forecast k-steps into the future.
 
-Overall, the model performs well, the deviations are small, however, the residuals do not look like white noise yet. There is still a visible auto-regressive behaviour present. This could mean, that the model order or structure is not yet sufficient, a more complex model could resolve that.
-Usually, the last option is to increase model complexity, but another argument for that is: The distribution of residuals is patterned. As indicated earlier, the model systematically overshoots for values of $P_h$ in the 'buckle' right after the steep drop of values in @fig:3_7_ar2_x2_2_ols_os and systematically undershoots values for the bottom of the drops.
+One could try different starting points for the k-step predictions, instead of just going through the entire dataset. With each further prediction the uncertainty rises, since the newest predictions depend on the older predictions.
 
-Apart from the prediction accuracy (which could potentially be improved), in an operational setting the model would work just fine with multi-step predictions. It is not computationally expensive and would be easily integrated into a prediction pipeline.
-Naturally, the further into the future we predict, the higher the uncertainty; that notion is present without calculating the prediction intervals. Beyond that, we saw certain points of the series (towards the drops of $P_h$) where the predictions tend to deviate; FIGURE, the seasonality of the RMSE over $k$ step-width.
-This does not improve if we simply choose a $k$ step-width, that produces a good RMSE, since we would work on a continually re-fitting real-time prediction pipeline. Hence, by the nature of the series, this point of drop in $P_h$ will naturally come, regardless of the k-step.
+Overall, the model performs well; the residuals approach a white noise like distribution. There is still some visible auto-regressive behaviour present, but statistically the evidence is almost sufficient for independence of residuals. Trying a higher order could resolve that.
+
+Apart from the prediction accuracy (which could potentially be improved), in an operational setting the model would work just fine with multi-step predictions. It is not too computationally expensive and would be easily integrated into a prediction pipeline.
+Naturally, the further into the future we predict, the higher the uncertainty; that notion is present without calculating the prediction intervals. Beyond that, we saw certain points of the series (towards the drops of $P_h$) where the predictions tend to deviate (@fig:3_9_rmse_kstep_pred), the seasonality of the RMSE over $k$ step-width.
+This does not improve if we simply choose a $k$ step-width, that produces a good RMSE, since we would work on a continually predicting on estimated values. At some point the system will take a state (the power drops), where the predictions have shown to be weaker. Hence, by the nature of the series, this point of drop in $P_h$ will naturally come, regardless of the k-step, so this cannot be avoided.
 
 Modelling-wise an RLS model with higher "forgetting" coefficient may be a viable option, to account for these know effects.
 
