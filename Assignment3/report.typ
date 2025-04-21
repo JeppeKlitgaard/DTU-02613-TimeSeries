@@ -540,6 +540,8 @@ $
 
 Where $c$ is a constant offset, $ϕ_i$ are the AR coefficients, $ω_(j, k)$ are the exogenous coefficients and $ε_t$ is a white-noise such that $ε_t ∼ 𝒩(0, σ_ε^2)$. $J$ refers to the number of exogenous variables such that $j ∈ {1, 2, …, J}$ become the indices of the exogenous variables.
 
+TODO FINISH REFACTOR HERE
+
 $
 Y_t = c - sum_(i = 1)^p phi.alt_i Y_(t - i) + sum_(i = 0)^(e_1) omega_(1 \, i + 1) X_(1 \, t - i) + sum_(i = 0)^(e_2) omega_(2 \, i + 1) X_(2 \, t - i) + . . . + epsilon_t
 $<eq:3_4_generic_arx>
@@ -635,7 +637,7 @@ a seasonality of 24 hours may be appropropriate for modelling their behaviour.
 Notably, we cannot reasonably estimate the parameters of, for example, an ARX model from the figures above,
 will instead require an outright fitting of the model(s) to the data.
 
-== Impulse Response<sec:3_4_impulse_response>
+== Impulse Response <sec:3_4_impulse_response>
 
 While the assignment description does not explicitly state the orders of the ARX model,
 which naturally need to be determined prior to carrying out an impulse response analysis,
@@ -643,10 +645,17 @@ we consider an $"AR"(1)"-"X(1, 1)$ model to be a reasonable choice, which is sup
 
 We consider the heater power, $P_h$, to be the _endogenous variable_, while the solar radiation, $G_v$, and temperature difference, $Δ T$, are the _exogenous variables_, which yields the following model:
 $
-  P_t = c + ϕ_1 P_(t-1) + ω_1 T_t + ω_2 G_t + ε_t\
+  P_t = c - ϕ_1 P_(t-1) + ω_1 T_t + ω_2 G_t + ε_t\
 $
 
-Where parameters $c, ϕ_1, ω_1, ω_2 ∈ ℝ$.
+Where parameters $c, ϕ_1, ω_1, ω_2 ∈ ℝ$, noting that we have also used the convention describing the different time series described in the introduction in @sec:3.
+
+While the phrasing in the assignment description is somewhat ambiguous, we interpret
+a "lag up to 10" to mean the that the impulse response function should be calculated
+for lags up to and including 10 time steps, which importantly is different to the _lag_ given by
+the order of the AR(p) process.
+
+TODO: FINISH REFACTOR HERE
 
 There are different options for modelling an impulse response for a model with 2 exogenous variables: $P_t$ with $G_t$ or $G_t$ as exogenous variable, as well as a model for $P_t$ with both as exogenous variables.
 
