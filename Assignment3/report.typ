@@ -881,7 +881,7 @@ Again a Ljung-Box test suggests that the residuals do not have significant autoc
 
 === AIC and BIC <sec:3_7_ic>
 
-Now we want to delve a bit deeper into other metrics for model selection, specifically the BIC (Bayesian Information Criterion) and AIC (Akaike Information Criterion). Generically they are calculated as:
+Now we want to delve a bit deeper into other metrics for model selection, specifically the BIC (Bayesian Information Criterion) and AIC (Akaike Information Criterion). Generally they are calculated as:
 
 $
   upright("AIC") & = - 2 log L (upright(bold(Y)) \| upright(bold(hat(psi)))) + 2 p\
@@ -890,10 +890,10 @@ $<eq:3_7_aic_bic>
 
 with the log-likelihood as:
 
-$ log L (upright(bold(Y)) \| upright(bold(hat(psi)))) = - n / 2 #scale(x: 180%, y: 180%)[\[] log (2 pi) + log #scale(x: 180%, y: 180%)[\(] (upright(bold(Y)) - upright(bold(hat(Y))))^2 / n #scale(x: 180%, y: 180%)[\)] + 1 #scale(x: 180%, y: 180%)[\]] $
+$ log L (upright(bold(Y)) \| upright(bold(hat(psi)))) = - n / 2 [ log (2 pi) + log( (upright(bold(Y)) - upright(bold(hat(Y))))^2 / n) + 1 ] $
 
 for $upright(bold(hat(psi)))$ as the MLE estimated parameters,
-$upright(bold(Y))$ as the target/modeled time-series, $n$ as the number
+$upright(bold(Y))$ as the modelled time-series, $n$ as the number
 of observations and $p$ as the number of parameters. In our case for the
 ARX model, since we only have an AR part, the MLE becomes an OLS
 estimation analogous to @eq:3_4_ols_parameter_est, hence $upright(bold(hat(psi))) = hat(Theta)$.
@@ -903,14 +903,13 @@ estimation analogous to @eq:3_4_ols_parameter_est, hence $upright(bold(hat(psi))
   caption: [AIC, BIC comparison of different models orders from @sec:3_5, @sec:3_6, @sec:3_7]
 ) <fig:3_7_aic_bic_model_comparison>
 
-This is a classic Elbow curve. In various modelling fields, information theoretical measures or straight residual measures (such as MSE, etc.) are plotted against different model variations. The general idea is, to deduce at which point, there is a good trade-off between parameters of the model and the model performance.
-In this case, we have the x-axis as increasing model order, hence increasing complexity and proneness to overfitting. Hence, we are looking for a trade-off between performance and model complexity. It is an interesting choice of metric to do this kind of plot. AIC and BIC inherently punish model complexity, as long as $log(n) > 2$, the BIC does even more so; this also explains the slight difference between those two curves. Thus they theoretically already account for one of the decision parameter that such Elbow-curve is intended to help with.
-If we look at the plot, there is a clear trend towards the more complex AR(2)-X(2,2) model. Traditionally, the decision here would be to select the AR(1)-X(1,1) model, as it already performs relatively well and the performance gain to the more complex model is very small. Hence, favour simplicity before performance, in the hope of better generalisation.
+This is a classic _elbow_ curve. In various modelling fields, information theoretical measures or straight residual measures (such as MSE, etc.) are plotted against different model variations. The general idea is, to deduce at which point there is a good trade-off between parameters of the model and the model performance.
+In this case, we have the $x$-axis as increasing model order, hence increasing complexity and proneness to overfitting. Hence, we are looking for a trade-off between performance and model complexity. It is an interesting choice of metric to do this kind of plot. AIC and BIC inherently punish model complexity, as long as $log(n) > 2$, the BIC does even more so; this also explains the slight difference between those two curves. Thus they theoretically already account for one of the decision parameter that such elbow-curve is intended to help with.
+If we look at the plot, there is a clear trend towards the more complex AR(2)-X(2,2) model. Traditionally, the decision here would be to select the AR(1)-X(1,1) model, as it already performs relatively well and the performance gain to the more complex model is very small.
 
-However, as the AIC and BIC both already punish the increased model complexity of AR(2)-X(2,2) model, but still produce a lower score, the interpretation would yield in: "more complex, but worth it". Therefore, the model selection would fall onto the AR(2)-X(2,2) model.
+However, as the AIC and BIC both already punish the increased model complexity of AR(2)-X(2,2) model, but still produce a lower score, which yields the interpretation that the increased performance is a worthwhile trade-off. Therefore, the model selection would fall onto the AR(2)-X(2,2) model.
 
-
-== RMSE metric and Prediction on test-dataset<sec:3_8>
+== RMSE Metric and Prediction on Test Data Set <sec:3_8>
 
 We now use the on the training dataset estimated parameters $hat(Theta)$ and use those for one-step predictions on the test dataset with an accordingly constructed design matrix.
 
@@ -919,11 +918,11 @@ We now use the on the training dataset estimated parameters $hat(Theta)$ and use
   caption: [RMSE comparison of different models orders from @sec:3_5, @sec:3_6, @sec:3_7 on concatenation of train and test dataset]
 ) <fig:3_8_rmse_model_comparison_test>
 
-Reflecting upon the question: Does @fig:3_8_rmse_model_comparison_test yield the same model selection as via the AIC, BIC metrics / criteria?
+We find in @fig:3_8_rmse_model_comparison_test that using the RMSE as a metric for model selection yields the same result as the AIC and BIC metrics, which is a good sign that the model selection process is robust.
 
-Yes. We already observed on the AIC and BIC on the training dataset that higher model order improves the predictive performance. Even on the distribution of residuals, we could observe increasing statistical evidence for independence of those (via Box-Ljung-Test).
-Now we have validated via RMSE on the test dataset that our model generalises well. The AR(2)-X(2,2) model also performs the best in this setting, showing that we have not overfitted with increasing complexity.
+We already observed on the AIC and BIC on the training dataset that higher model order improves the predictive performance.
 
+Thus, having validated via the RMSE on the test dataset that our model generalises well, we maintain that the AR(2)-X(2,2) model is the best trade-off between performance and complexity.
 
 == $k$-Step Predictions<sec:3_9>
 
