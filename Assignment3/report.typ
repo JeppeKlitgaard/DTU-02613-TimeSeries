@@ -493,7 +493,7 @@ In summary, the final AR(1)-X(1,1) model becomes:
 
 $
 P_t = - phi.alt_1 P_(t-1) + omega_1 T_t + beta_1 G_t + epsilon_t
-$<eq:3_4_ar10_x1_1>
+$<eq:3_4_ar1_x1_1>
 
 We will use the the ```AutoReg```class from ```statsmodels.tsa.ar_model``` in Python, which allows to provide an exogenous variable and has built in parameter estimation (via OLS and conditional MLE).
 To double check, we also did our own classic OLS fit on the design matrix: $X = [P_(t-1), T_t, G_t]$ noted in the form of column vectors of the corresponding series, which yields a parameter vector of $Theta = [- phi.alt_1, omega_1, beta_1]^T in bb(R)^(p+e_1+e_2)$.
@@ -501,7 +501,7 @@ To double check, we also did our own classic OLS fit on the design matrix: $X = 
 $
   arrow.r.double &  & P_(t-p, n) & = X dot.op Theta + epsilon_t = Y \
   arrow.l.r.double &  & hat(Theta) & = (X^T X)^(- 1) X^T Y \
-$<eq:3_4_ols_parameter_est_ar10_x1_1>
+$<eq:3_4_ols_parameter_est>
 
 The resulting parameters are given as:
 
@@ -578,7 +578,7 @@ $
 $<eq:3_5_ols_model>
 
 with the design matrix: $X = [T_t \, G_t]$ for the column-vectors
-and with $Theta = [omega_1 \, beta_1]^T$ as parameter vector. The estimation (fitting the model) for $hat(Theta)$ will be analogous to @eq:3_4_ols_parameter_est_ar10_x1_1.
+and with $Theta = [omega_1 \, beta_1]^T$ as parameter vector. The estimation (fitting the model) for $hat(Theta)$ will be analogous to @eq:3_4_ols_parameter_est.
 
 The resulting parameters are $hat(Theta) = [3.8948 \, -0.1099]^T$ with a corresponding RMSE of $approx 5.407$. Thus we have our linear regression predictions as $X dot.op hat(Theta) = hat(P_t)$.
 Further we can shall do one-step predictions (as in @sec:3_8_OSPred_RMSE), which is a way of iteratively re-fitting the model. It is predicting the values of $hat(P_t)$ one step ahead, with the parameters $hat(Theta_(t-1))$ fitted onto the previous time-step, hence, also the design matrix $X_(t-1) = [T_(0, t-1), G_(0,t-1)]$ constructed until the previous time-step. Consequently, for $k=1$:
@@ -609,7 +609,7 @@ TODO
 
 === AR(1)-X(1,1) Model<sec:3_6_ar1_x1_1>
 
-Now, we deal with a model that supplements the previous model by one AR component:
+Now, we deal with a model that supplements the previous model by one AR component (but already modeled in @eq:3_4_ar1_x1_1):
 
 $
   P_t = -phi.alt_1 P_(t-1) + omega_1 T_t + beta_1 G_t + epsilon_t
@@ -658,7 +658,7 @@ for $upright(bold(hat(psi)))$ as the MLE estimated parameters,
 $upright(bold(Y))$ as the target/modeled time-series, $n$ as the number
 of observations and $p$ as the number of parameters. In our case for the
 ARX model, since we only have an AR part, the MLE becomes an OLS
-estimation analogous to @eq:3_4_ols_parameter_est_ar10_x1_1, hence $upright(bold(hat(psi))) = hat(Theta)$.
+estimation analogous to @eq:3_4_ols_parameter_est, hence $upright(bold(hat(psi))) = hat(Theta)$.
 
 Here we only consider full OLS estimates and not the one-step predictions (as those did worse in every model and need a burn-in period).
 
