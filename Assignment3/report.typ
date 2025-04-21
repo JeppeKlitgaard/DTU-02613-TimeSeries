@@ -639,45 +639,15 @@ we consider an $"AR"(1)"-"X(1, 1)$ model to be a reasonable choice, which is sup
 
 We consider the heater power, $P_h$, to be the _endogenous variable_, while the solar radiation, $G_v$, and temperature difference, $Δ T$, are the _exogenous variables_, which yields the following model:
 $
-  P_t = c - ϕ_1 P_(t-1) + ω_1 T_t + ω_2 G_t + ε_t\
+  P_t = -ϕ_1 P_(t-1) + ω_1 T_t + ω_2 G_t + ε_t\
 $
 
-Where parameters $c, ϕ_1, ω_1, ω_2 ∈ ℝ$, noting that we have also used the convention describing the different time series described in the introduction in @sec:3.
+Where parameters $ϕ_1, ω_1, ω_2 ∈ ℝ$, noting that we have also used the convention describing the different time series described in the introduction in @sec:3.
 
-While the phrasing in the assignment description is somewhat ambiguous, we interpret
-a "lag up to 10" to mean the that the impulse response function should be calculated
-for lags up to and including 10 time steps, which importantly is different to the _lag_ given by
-the order of the AR(p) process.
-
-TODO: FINISH REFACTOR HERE
-
-There are different options for modelling an impulse response for a model with 2 exogenous variables: $P_t$ with $G_t$ or $G_t$ as exogenous variable, as well as a model for $P_t$ with both as exogenous variables.
-
-TODO: I DON'T REALLY UNDERSTAND THIS SENTENCE ↑
-
-$
-upright("AR(p)-X(e1, e2)") = c + sum_(i = 0)^p phi.alt_i B^i P_t + sum_(i = 0)^(e_1) omega_i B^i T_t + sum_(i = 0)^(e_2) beta_i B^i G_t + epsilon_t
-$<eq:3_4_context_arx>
-
-for both as exogenous, given parameters/coefficients $phi.alt_i \, beta_i \, omega_i in bb(R)$.
-
-Now there are different options how to interpret the phrasing "up to lag 10". This could refer to the lagged samples of the modeled series $P_t$, hence the AR components, or it could refer to the depth of recursion for the impulse response function $upright("IRF")(k)$.
-It is ambiguous from which of the exogenous variables, $G_t$ or $T_t$ the unit impulse should come from. Either from both together or each gives an impulse separately.
-
-Therefore, we need to make reasonable choices for the model. We choose an AR(1)-X(1,1) model (based on the findings in @sec:3_3) with a given lag of of $k=10$ for the impulse response function IRF(k).
-
-While we interpret the task, such that we model two impulse responses, from $G_t$ and $T_t$ separately, the unit impulse given from the variable $T_t$ seems much more meaningful. As @fig:3_3_pairplot shows, it has a positive correlation with the target series $P_t$, while @fig:3_1_analysis clearly indicates, the variable $G_t$ has an inverse relationship with the target $P_t$.
+We model two impulse responses in $G_t$ and $T_t$ separately and find that the unit impulse given from the variable $T_t$ seems more siginficant. As @fig:3_3_pairplot shows, it has a positive correlation with the target series $P_t$, while @fig:3_1_analysis clearly indicates, the variable $G_t$ has an inverse relationship with the target $P_t$.
 Even before estimating anything, we can assume that a unit impulse from $T_t$ will be impactful, while for $G_t$ the response will decay extremely fast, as the original series have opposing effects.
 
-Having such a relatively simple model, one could potentially read-off maybe the first $phi.alt_1$ parameter of the AR part via an ACF and PACF plot to conclude that probably $|phi.alt_1|<1$. Maybe even find an argument for alternating signs throughout all coefficients, based on the PACF plot.
-
-In summary, the final AR(1)-X(1,1) model becomes:
-
-$
-P_t = - phi.alt_1 P_(t-1) + omega_1 T_t + beta_1 G_t + epsilon_t
-$<eq:3_4_ar1_x1_1>
-
-We will use the the ```AutoReg```class from ```statsmodels.tsa.ar_model``` in Python, which allows to provide an exogenous variable and has built in parameter estimation (via OLS and conditional MLE).
+We will use the the `AutoReg`class from `statsmodels.tsa.ar_model` in Python, which allows to provide an exogenous variable and has built in parameter estimation (via OLS and conditional MLE).
 To double check, we also did our own classic OLS fit on the design matrix: $X = [P_(t-1), T_t, G_t]$ noted in the form of column vectors of the corresponding series, which yields a parameter vector of $Theta = [- phi.alt_1, omega_1, beta_1]^T in bb(R)^(p+e_1+e_2)$.
 
 $
@@ -740,9 +710,9 @@ The impulse response coefficients $v_k$ are:
   caption: [impulse response coefficients for AR(1)-X(1,1)],
 ) <table:3_4_irf_coeff>
 
-As already explained based on @fig:3_1_analysis, the two impulse responses counter-act. The IR (impulse response) for this model decays rather quickly, especially with the impact of an exogenous variable that is reciprocal to the target variable. Most of these effects were already assumed based on available information.
+As already explained based on @fig:3_1_analysis, the two impulse responses counter-act. The IR (impulse response) for this model decays rather quickly, especially with the impact of an exogenous variable that is reciprocal to the target variable.
 
-We can also confirm, that this process is stable, since $sum_(k=1)^(infinity) |v_k| < infinity$.
+We can also confirm that this process is stable given $sum_(k=1)^(infinity) |v_k| < infinity$.
 
 Because of this stability the model is rather robust to unit shocks from both exogenous variables, more robust from shocks of $G_v$ than from $T_t$ in fact. As a consequence, with this model, we can accept a certain degree of fluctuation in the exogenous variables, without having to worry about a big impact on the predictive performance of our model. For example, the effect of a measurements error or sensor defect in $T_d$ or $G_v$ that acts as a shock to our system, will not last for very long.
 Thus, having a larger order for the AR part of our model pretects against shocks from the other variables. On the other hand, the model is more vulnerable to sudden changes in auto-regressive behaviour.
@@ -972,7 +942,7 @@ Beyond that we look at a plot of the RMSE against the step-width $k$ with the in
   caption: [k-step predictions for intervals]
 ) <fig:3_9_rmse_kstep_pred>
 
-As expected, the RMSE reacts heavily to the amount of steps into the future. Naturally, in the beginning there is a huge error in the predictions, as for k-step predictions, we follow a recursive approach, making predictions upon predicted values. For low $k$ this means, there are not many original values of the target series included, resulting in predictions quickly drifting off.
+As expected, the RMSE reacts heavily to the amount of steps into the future. Naturally, in the beginning there is a huge error in the predictions, as for $k$-step predictions we make predictions upon predicted values. For $k < 3$ there are not many original values of the target series included, resulting in predictions quickly drifting off.
 
 $P_h$ clearly shows seasonal drops in power (@fig:3_1_analysis). In some intervals however, there are exceptions, where the drop is not as sudden or not as steep. We assume this results in the small buckles in @fig:3_9_rmse_kstep_pred. It is a step width, that goes in phase with the seasonal drops in $P_h$.
 
@@ -986,7 +956,7 @@ Apart from the prediction accuracy (which could potentially be improved), in an 
 Naturally, the further into the future we predict, the higher the uncertainty; that notion is present without calculating the prediction intervals. Beyond that, we saw certain points of the series (towards the drops of $P_h$) where the predictions tend to deviate (@fig:3_9_rmse_kstep_pred), the seasonality of the RMSE over $k$ step-width.
 This does not improve if we simply choose a $k$ step-width, that produces a good RMSE, since we would work on a continually predicting on estimated values. At some point the system will take a state (the power drops), where the predictions have shown to be weaker. Hence, by the nature of the series, this point of drop in $P_h$ will naturally come, regardless of the k-step, so this cannot be avoided.
 
-Modelling-wise an RLS model with higher "forgetting" coefficient may be a viable option, to account for these know effects.
+Modelling-wise an RLS model with higher "forgetting" coefficient may be a viable option.
 
 Given that knowledge on the historic data, it would be wiser to simply accept an increased uncertainty in specific periods of the series and contextualize consequences: Reduce heating at the drops, but also have power available in case of slight mis-predictions.
 
@@ -994,7 +964,7 @@ It could also be an option to reduce the measurement interval from hourly to 5-m
 
 == Conclusions <sec:3_10_conclusions>
 
-*Some Reflections on the model selection process (@sec:3_5 to @sec:3_7):*
+TODO MORE FAFF
 
 The construction of the selection process was a step by step increase in model complexity.
 
