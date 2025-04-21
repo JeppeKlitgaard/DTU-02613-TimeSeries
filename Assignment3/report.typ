@@ -252,17 +252,22 @@ $
     |z_(1,2)| ≈ {0.963, 3.463}
 $
 
-Which reveals that we are decidedly not stationary and the process should blow up
+Which reveals that the process is decidedly not stationary and should blow up
 as time progresses, which is also what we observe in @fig:1_6 and @fig:1_6_acf.
 
-@fig:1_6_acf fails to compute the empirical ACF, while the theoretical ACF diverges quickly.
-
-TODO MORE FAFF
+@fig:1_6_acf fails to compute the empirical ACF, while the theoretical ACF quickly increases with time.
 
 == <sec:1_7>
 
-TODO WRITEUP
+While a lot of information may be gleaned from the autocorrelation function alone, it is useful to also plot the time series itself to get a better understanding of the process, particularly
+for processes with long characteristic correlation times.
+For instance, the autocorrelation does not give information about the scale amplitude of the process.
 
+For higher order AR processes, the autocorrelation function may be difficult to interpret,
+in which case it is again useful to plot the time series itself.
+
+Lastly, the autocorrelation function provides no information about the process realisations
+at specific points in time, which is often useful for understanding or interpreting the underlying process.
 
 #pagebreak()
 = Predicting Monthly Solar Power <sec:2_predicting_monthly_solar_power>
