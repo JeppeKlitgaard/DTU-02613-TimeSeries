@@ -269,6 +269,8 @@ in which case it is again useful to plot the time series itself.
 Lastly, the autocorrelation function provides no information about the process realisations
 at specific points in time, which is often useful for understanding or interpreting the underlying process.
 
+The code used for the simulations can be found in the attached notebook `JK_1.ipynb`.
+
 #pagebreak()
 = Predicting Monthly Solar Power <sec:2_predicting_monthly_solar_power>
 
@@ -512,6 +514,7 @@ due to the overly large effect of the variance during the winter months on the r
 
 The implementation of the prediction intervals can be found in the attached Jupyter Notebook `JK_2.ipynb`.
 
+#pagebreak()
 = An ARX Model for the Heating of a Box <sec:3>
 
 We are given a data set of hourly measurements from a box instrumented with a heater,
