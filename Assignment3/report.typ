@@ -348,7 +348,7 @@ In particular, we find that the standardised residuals do not exhibit strong sys
 although the first summer (observations 5-10) does appear to be skewed slightly positive in the residuals.
 Additionally, we find the residuals to be well-described by a normal distribution as seen in the Q-Q plot and histogram.
 
-One could carry out a Lljung-Box test to further substantiate this claim, but we find that
+One could carry out a Ljung-Box test to further substantiate this claim, but we find that
 this is not nececssary in this case.
 
 == Forecasting
