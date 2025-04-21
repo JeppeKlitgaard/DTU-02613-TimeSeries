@@ -70,45 +70,201 @@ $
   φ_1 = -ϕ_1, wide φ_2 = -ϕ_2
 $ <eq:1_phi_sign_change>
 
-== Realisations
-
-=== 1.1 & 1.2
-We simulate the given process 5 times using the ```SARIMAX``` module with $n=200$ observations and the coefficients set to: $ϕ_1 = -0.6$ and $ϕ_2 = 0.5$
+== <sec:1_1>
+We simulate 5 realisations of the process up to $n=200$ observations using a burn-in period of $N_B = 10000$ with parameters $ϕ_1 = -0.6$ and $ϕ_2 = 0.5$ and plot the results in @fig:1_1.
 
 #figure(
-  // image("img/blabla.png"),
-  [],
+  image("output/1_1.png"),
   caption: [Simulation and Autocorrelation function of AR(2) process with $ϕ_1 = -0.6, ϕ_2 = 0.5$.],
-) <fig:1_1_sim-acf>
+) <fig:1_1>
 
-- plot Simulation and ACF together
-- plot "empirical" ACF and rho(k) for k lag in {0, ..., 30}
-- comment on the result
+We find that the results look as expected.
 
-=== 1.3
+== <sec:1_2>
 
-- new simulations & ACFs with $ϕ_1 = -0.6$ and $ϕ_2 = -0.3$
-- comment on each, focus on stationarity
+We recall the definition of _autocorrelation_ for a _stationary process_:
+$
+  ρ(k) = γ(k)/γ(0)
+$ <eq:1_autocorrelation>
 
-=== 1.4
+Where $γ(k)$ is the _autocovariance_ for a timeshift $k$:
+$
+  γ(k) = Cov[X_t, X_(t+k)]
+$ <eq:1_autocovariance>
 
-- with $ϕ_1 = 0.6$ and $ϕ_2 = -0.3$
+We consider the autocorrelation of an AR(2) process by solving for $X_t$ in @eq:1_ar2:
+$
+  X_t = -ϕ_1 X_(t-1) - ϕ_2 X_(t-2) + ε_t
+$ <eq:1_ar2_solved>
 
-=== 1.5
+And then inserting this in @eq:1_autocorrelation:
+$
+  ρ(k) = Cov[X_t, X_(t+k)] / γ(0)
+    &= Cov[X_t, -ϕ_1 X_(t-1+k) - ϕ_2 X_(t-2+k) + ε_t] / γ(0)\
+    &= Cov[X_t, -ϕ_1 X_(t-1+k)] / γ(0) + Cov[X_t, -ϕ_2 X_(t-2+k)] / γ(0) + cancel(Cov[X_t, ε_t] / γ(0))\
+    &= -ϕ_1 Cov[X_t, X_(t-1+k)] / γ(0) - ϕ_2 Cov[X_t, X_(t-2+k)] / γ(0)\
+    &= -ϕ_1 γ(k-1) / γ(0) - ϕ_2 γ(k-2) / γ(0)\
+  ρ(k) &= -ϕ_1 ρ(k-1) - ϕ_2 ρ(k-2)\
+$ <eq:1_autocorrelation_recursion>
 
-- with $ϕ_1 = -0.7$ and $ϕ_2 = -0.3$
+Notably by stationary it follows $ρ(-k) = ρ(k)$ and from @eq:1_autocorrelation we find $ρ(0) = 1$,
+which allows us to build a recursive relation for $ρ(k)$ from:
 
-=== 1.6
+$
+  ρ(0) &= 1\
+  ρ(1) &= -ϕ_1 ρ(0) - ϕ_2 ρ(-1) = -ϕ_1 - ϕ_2ρ(1) = (-ϕ_1)/(1+ϕ_2)\
+$ <eq:1_autocorrelation_recursion_2>
 
-- with $ϕ_1 = -0.75$ and $ϕ_2 = -0.3$
+We can compute the empirical autocorrelation function (ACF) using the `plot_acf` function from `statsmodels`,
+which we compute for each of the realisations shown in @fig:1_1.
 
-=== 1.7
+This is plotted in @fig:1_2_acf along with the theoretical autocorrelation function, $ρ(k)$, as given by @eq:1_autocorrelation_recursion_2.
 
-- comment on: is it enough to plot the ACF or is the time-series helpful?
-- ...in @fig:1_1_sim-acf we can see...
+#figure(
+  image("output/1_2_acf.png"),
+  caption: [
+    Theoretical and empirical autocorrelation functions of an AR(2) process with $ϕ_1 = -0.6, ϕ_2 = 0.5$.
+    Shaded blue region is the 95% confidence interval for the empirical ACF.
+  ],
+) <fig:1_2_acf>
+
+We observe good agreement between the theoretical and empirical autocorrelation functions.
+The deviations observed after $k=4$ are results of the finite sample size of the simulation,
+which is also reflected in the shaded blue confidence intervals.
+The damped oscillations of the autocorrelation functions are expected, as also indicated
+in @table:order_identification on #ref(<table:order_identification>, form: "page", supplement: "Page").
+
 
 #pagebreak()
+== <sec:1_3>
 
+We now repeat the simulation with $ϕ_1 = -0.6$ and $ϕ_2 = -0.3$ and plot the results in @fig:1_3 and @fig:1_3_acf.
+
+#figure(
+  image("output/1_3.png"),
+  caption: [Simulation and Autocorrelation function of AR(2) process with $ϕ_1 = -0.6, ϕ_2 = -0.3$.],
+) <fig:1_3>
+
+#figure(
+  image("output/1_3_acf.png"),
+  caption: [
+    Theoretical and empirical autocorrelation functions of an AR(2) process with $ϕ_1 = -0.6, ϕ_2 = -0.3$.
+    Shaded blue region is the 95% confidence interval for the empirical ACF.
+  ],
+) <fig:1_3_acf>
+
+We observe that the process remains stationary, but the characteristic correlation times
+are now much longer than for the previous case in @sec:1_1 and @sec:1_2.
+In @fig:1_3 we can clearly see that variations in the time series are much more pronounced than in @fig:1_1.
+
+#pagebreak()
+== <sec:1_4>
+
+We now repeat the simulation with $ϕ_1 = 0.6$ and $ϕ_2 = -0.3$ and plot the results in @fig:1_4 and @fig:1_4_acf.
+
+#figure(
+  image("output/1_4.png"),
+  caption: [Simulation and Autocorrelation function of AR(2) process with $ϕ_1 = 0.6, ϕ_2 = -0.3$.],
+) <fig:1_4>
+
+#figure(
+  image("output/1_4_acf.png"),
+  caption: [
+    Theoretical and empirical autocorrelation functions of an AR(2) process with $ϕ_1 = 0.6, ϕ_2 = -0.3$.
+    Shaded blue region is the 95% confidence interval for the empirical ACF.
+  ],
+) <fig:1_4_acf>
+
+We again observe that the process is stationary, but find that the sign change in $ϕ_2$ with respect to @sec:1_3 has introduced a fast oscillation in the time series.
+
+We find that for realisations 1 and 3 the autocorrelation does decays slower than expected by
+theory. This is again attributed to the finite sample size of the simulation,
+the artifacts of which become more pronounced for processes with longer characteristic
+correlation times such as the one observed in @fig:1_4.
+
+We propose increasing the number of simulated observations, $n$, to a larger number
+for such processes if the empirical autocorrelation function is to be used for identification
+or interpretation.
+
+#pagebreak()
+== <sec:1_5>
+
+We again repeat the simulation with $ϕ_1 = -0.7$ and $ϕ_2 = -0.3$ and plot the results in @fig:1_5 and @fig:1_5_acf.
+
+#figure(
+  image("output/1_5.png"),
+  caption: [Simulation and Autocorrelation function of AR(2) process with $ϕ_1 = -0.7, ϕ_2 = -0.3$.],
+) <fig:1_5>
+
+#figure(
+  image("output/1_5_acf.png"),
+  caption: [
+    Theoretical and empirical autocorrelation functions of an AR(2) process with $ϕ_1 = -0.7, ϕ_2 = -0.3$.
+    Shaded blue region is the 95% confidence interval for the empirical ACF.
+  ],
+) <fig:1_5_acf>
+
+In figure @fig:1_5 we observe that the process is exactly at the critical point
+of stationarity, where the theoretical autocorrelation function does not decay to zero.
+
+This can be understood by considering the stationarity conditions for an AR(2) process, which
+require that the _roots_, $z_(1,2)$ of the _characteristic polynomial_ lie outside the unit circle, such that $|z_(1, 2)| > 1$.
+
+For the AR(2) process in @eq:1_ar2 the characteristic polynomial is given by:
+$
+  P(z) = 1 + ϕ_1 z + ϕ_2 z^2
+$
+
+Where the roots are then given by:
+$
+  z_(1,2) &= (ϕ_1 ± sqrt(ϕ_1^2 + 4ϕ_2))/(-2 ϕ_2)\
+$ <eq:ar2_roots>
+
+We find:
+$
+  |z_(1,2)| = {1, 3.overline(33)}
+$
+
+Where clearly, $|z_1| = 1 ≯ 1$, violates the strict inequality of the stationarity condition,
+the consequence of which is a process where shocks do not decay away over time.
+
+We note that the process does not explode because we are exactly at the point of criticality.
+
+#pagebreak()
+== <sec:1_6>
+
+Once more we repeat the simulation, this time with $ϕ_1 = -0.75$ and $ϕ_2 = -0.3$ and plot the results in @fig:1_6 and @fig:1_6_acf.
+
+#figure(
+  image("output/1_6.png"),
+  caption: [Simulation and Autocorrelation function of AR(2) process with $ϕ_1 = -0.75, ϕ_2 = -0.3$.],
+) <fig:1_6>
+
+#figure(
+  image("output/1_6_acf.png"),
+  caption: [
+    Theoretical and empirical autocorrelation functions of an AR(2) process with $ϕ_1 = -0.75, ϕ_2 = -0.3$.
+  ],
+) <fig:1_6_acf>
+
+Using @eq:ar2_roots we find:
+$
+    |z_(1,2)| ≈ {0.963, 3.463}
+$
+
+Which reveals that we are decidedly not stationary and the process should blow up
+as time progresses, which is also what we observe in @fig:1_6 and @fig:1_6_acf.
+
+@fig:1_6_acf fails to compute the empirical ACF, while the theoretical ACF diverges quickly.
+
+TODO MORE FAFF
+
+== <sec:1_7>
+
+TODO WRITEUP
+
+
+#pagebreak()
 = Predicting Monthly Solar Power <sec:2_predicting_monthly_solar_power>
 
 We are given a seasonal AR model:
@@ -360,6 +516,27 @@ The box has window on its south-facing wall, onto which the vertical solar radia
 
 The internal temperature of the box was kept approximately constant using a thermostatic control of the internal heater.
 
+In this section, we will be working AutoRegressive models with eXogenous variables (ARX),
+for which we will adopt a notation in which $upright("AR")(p)"-"upright("X") (e_1, e_2, …)$ refers to
+an ARX where $p$ determines the order of the AutoRegressive (AR) part of the model while $e_j$ for $j ∈ ℕ_+$ refers to the order of the $j$th exogenous variable $X_j$.
+
+This yields the following generic ARX model:
+
+$
+  Y_t
+    = c
+    - underbrace(sum_(i = 1)^p ϕ_i Y_(t-i), "AR Part")
+    + underbrace(sum_(j = 1)^J sum_(k=0)^(e_j) ω_(j, k) X_(j, t-k), "Exogenous Part")
+    + ε_t
+$
+
+Where $c$ is a constant offset, $ϕ_i$ are the AR coefficients, $ω_(j, k)$ are the exogenous coefficients and $ε_t$ is a white-noise such that $ε_t ∼ 𝒩(0, σ_ε^2)$. $J$ refers to the number of exogenous variables such that $j ∈ {1, 2, …, J}$ become the indices of the exogenous variables.
+
+$
+Y_t = c - sum_(i = 1)^p phi.alt_i Y_(t - i) + sum_(i = 0)^(e_1) omega_(1 \, i + 1) X_(1 \, t - i) + sum_(i = 0)^(e_2) omega_(2 \, i + 1) X_(2 \, t - i) + . . . + epsilon_t
+$<eq:3_4_generic_arx>
+
+To further unify notation, we assume a model, where ${ T_t }$ represents the series $T_(upright("delta"))$, ${ G_t }$ is the series $G_v$ and ${P_t }$ is the series $P_h$ for $t in { 1 \, . . . \, 167 }$ in the training dataset.
 
 == Exploratory Dependency Analysis <sec:3_1>
 
@@ -447,31 +624,25 @@ a seasonality of 24 hours may be appropropriate for modelling their behaviour.
   caption: [Reproduction of Table 6.1 from @Madsen_2008[p.~155] showing the expected behaviour of the autocorrelation function for different ARMA processes],
 ) <table:order_identification>
 
-TODO ELABORATE ON WHAT THIS DOES NOT SHOW?
-
-== ARX Models
-
-In this section, we will be working a different flavours of ARX models (extended auto-regressive models), thus it is key, to define a common notation especially for the eXogenous variables.
-
-Therefore, our clear and generic notation for ARX models with
-multiple exogenous variables:
-
-$ upright("AR") (p) - upright("X") (e_1 \, e_2 \, . . .) $
-
-where $p$ is as in most literature, the order of the AR part of the
-model, $e_1$ is the order of the first exogenous variable, $e_2$ the
-order of the second exogenous variable and so on. Formally, we have:
-
-$
-Y_t = c - sum_(i = 1)^p phi.alt_i Y_(t - i) + sum_(i = 0)^(e_1) omega_(1 \, i + 1) X_(1 \, t - i) + sum_(i = 0)^(e_2) omega_(2 \, i + 1) X_(2 \, t - i) + . . . + epsilon_t
-$<eq:3_4_generic_arx>
-
-To further unify notation, we assume a model, where ${ T_t }$ represents the series $T_(upright("delta"))$, ${ G_t }$ is the series $G_v$ and ${P_t }$ is the series $P_h$ for $t in { 1 \, . . . \, 167 }$ in the training dataset.
-
+Notably, we cannot reasonably estimate the parameters of, for example, an ARX model from the figures above,
+will instead require an outright fitting of the model(s) to the data.
 
 == Impulse Response<sec:3_4_impulse_response>
 
+While the assignment description does not explicitly state the orders of the ARX model,
+which naturally need to be determined prior to carrying out an impulse response analysis,
+we consider an $"AR"(1)"-"X(1, 1)$ model to be a reasonable choice, which is supported by the analysis of the PACF in @fig:3_3_pacf above.
+
+We consider the heater power, $P_h$, to be the _endogenous variable_, while the solar radiation, $G_v$, and temperature difference, $Δ T$, are the _exogenous variables_, which yields the following model:
+$
+  P_t = c + ϕ_1 P_(t-1) + ω_1 T_t + ω_2 G_t + ε_t\
+$
+
+Where parameters $c, ϕ_1, ω_1, ω_2 ∈ ℝ$.
+
 There are different options for modelling an impulse response for a model with 2 exogenous variables: $P_t$ with $G_t$ or $G_t$ as exogenous variable, as well as a model for $P_t$ with both as exogenous variables.
+
+TODO: I DON'T REALLY UNDERSTAND THIS SENTENCE ↑
 
 $
 upright("AR(p)-X(e1, e2)") = c + sum_(i = 0)^p phi.alt_i B^i P_t + sum_(i = 0)^(e_1) omega_i B^i T_t + sum_(i = 0)^(e_2) beta_i B^i G_t + epsilon_t
@@ -482,9 +653,9 @@ for both as exogenous, given parameters/coefficients $phi.alt_i \, beta_i \, ome
 Now there are different options how to interpret the phrasing "up to lag 10". This could refer to the lagged samples of the modeled series $P_t$, hence the AR components, or it could refer to the depth of recursion for the impulse response function $upright("IRF")(k)$.
 It is ambiguous from which of the exogenous variables, $G_t$ or $T_t$ the unit impulse should come from. Either from both together or each gives an impulse separately.
 
-Therefore, we need to make reasonable choices for the model. We choose an AR(1)-X(1,1) model (based on the findings in @sec:3_3) with a given lag of of $k=10$ for the impulse response function IRF(k). 
+Therefore, we need to make reasonable choices for the model. We choose an AR(1)-X(1,1) model (based on the findings in @sec:3_3) with a given lag of of $k=10$ for the impulse response function IRF(k).
 
-While we interpret the task, such that we model two impulse responses, from $G_t$ and $T_t$ separately, the unit impulse given from the variable $T_t$ seems much more meaningful. As @fig:3_3_pairplot shows, it has a positive correlation with the target series $P_t$, while @fig:3_1_analysis clearly indicates, the variable $G_t$ has an inverse relationship with the target $P_t$. 
+While we interpret the task, such that we model two impulse responses, from $G_t$ and $T_t$ separately, the unit impulse given from the variable $T_t$ seems much more meaningful. As @fig:3_3_pairplot shows, it has a positive correlation with the target series $P_t$, while @fig:3_1_analysis clearly indicates, the variable $G_t$ has an inverse relationship with the target $P_t$.
 Even before estimating anything, we can assume that a unit impulse from $T_t$ will be impactful, while for $G_t$ the response will decay extremely fast, as the original series have opposing effects.
 
 Having such a relatively simple model, one could potentially read-off maybe the first $phi.alt_1$ parameter of the AR part via an ACF and PACF plot to conclude that probably $|phi.alt_1|<1$. Maybe even find an argument for alternating signs throughout all coefficients, based on the PACF plot.
@@ -569,7 +740,7 @@ Thus, having a larger order for the AR part of our model pretects against shocks
 
 In this section, we will stick to the notation convention for ARX models introduced above and create a selection of models for comparison.
 
-=== Linear Regression<sec:3_5_ar0_x1_1>
+=== Linear Regression <sec:3_5_ar0_x1_1>
 
 For the simple linear regression (OLS) model we have:
 
