@@ -759,32 +759,44 @@ $<eq:3_5_ols_model>
 with the design matrix: $X = [T_t \, G_t]$ for the column-vectors
 and with $Theta = [omega_1 \, beta_1]^T$ as parameter vector. The estimation (fitting the model) for $hat(Theta)$ will be analogous to @eq:3_4_ols_parameter_est.
 
-The resulting parameters are $hat(Theta) = [3.8948 \, -0.1099]^T$ with a corresponding RMSE of $approx 5.407$. Thus we have our linear regression predictions as $X dot.op hat(Theta) = hat(P_t)$.
-Further we can shall do one-step predictions (as in @sec:3_8_OSPred_RMSE), which is a way of iteratively re-fitting the model. It is predicting the values of $hat(P_t)$ one step ahead, with the parameters $hat(Theta_(t-1))$ fitted onto the previous time-step, hence, also the design matrix $X_(t-1) = [T_(0, t-1), G_(0,t-1)]$ constructed until the previous time-step. Consequently, for $k=1$:
+The resulting parameters are $hat(Theta) = [3.8948 \, -0.1099]^T$ with a corresponding RMSE of $approx 5.407$. Thus we have our linear regression predictions as $X dot.op hat(Theta) = hat(P_t)$ for the one-step predictions (simply shorter as straight matrix multiplication). The iterative formulation would be:
 
 $
-  hat(P)_(t+k|t) = X_(t+k) dot.op hat(Theta_(t))
+  hat(P)_(t+k|t) = X_(t+k) dot.op hat(Theta)
 $<eq:3_5_os_pred>
 
-with
-
-$
-  X_(t+k) &= [T_(0, t+k), G_(0,t+k)] quad upright("series from observations 0 to ") t+k
-  hat(Theta_t) &= (X_t^T X_t)^(-1) X_t^T P_t
-  hat(epsilon)_(t) &= P_(t+k) - hat(P)_(t+k|t)
-$
-
-For a fair comparison, a burn-in period of 2 observations was granted to the one-step predictions, to deal with reasonable values. Still, a RMSE of $22.6638$ was noted.
+for $k=1$ with $X_(t+k) &= [T_(t+k), G_(t+k)]$ and $hat(epsilon)_(t) &= P_(t+k) - hat(P)_(t+k|t)$.
 
 #figure(
-  image("output/3_5_residual_analysis_ols_os.png"),
-  caption: [model and residual analysis or linear model and its one-step predictions]
-) <fig:3_5_residual_analysis_ols_os>
+  image("output/3_5_residual_analysis_ols.png"),
+  caption: [model and residual analysis of one-step predictions]
+) <fig:3_5_residual_analysis_ols>
 
-In @fig:3_5_residual_analysis_ols_os, we can observe that the one-step prediction model performs slighty worse than the full linear model. Especially in the sharp drops, the one-step approach does not quite capture the movement as fast. The ACF and CCF plots show, that the residuals are far from being white-noise (which is the desirable state; then the error is $epsilon_t$). This indicates a systematic error in the predictions, so there is room for improvement of the model.
+In @fig:3_5_residual_analysis_ols, we can observe that the one-step prediction approach does not quite capture the movement as fast, especially in the sharp drops of $P_t$. The ACF and CCF plots show, that the residuals are far from being white-noise (which is the desirable state; then the error is $epsilon_t$). This indicates a systematic error in the predictions, so there is room for improvement of the model. This can be validated via a Box-Ljung-Test, which until a lag of $k=73$ does not show a significant p-value, so the residuals are not independent and there is definitely some auto-regressive behaviour.
 
-TODO
-- need for a transfer function?
+The model could benefit from a pre-whitening. This would fit an ARMA model on each of the input variables $T_t$ and $G_t$. 
+
+$
+  phi.alt (B) G_t &= theta (B) epsilon_t
+  phi.alt_2 (B) T_t &= theta_2 (B) epsilon_t
+$
+
+when re-arranged, this will be transformed into the white-noise component
+
+$
+  phi.alt (B) (theta (B))^(-1) G_t &=  epsilon_t
+  phi.alt_2 (B) (theta_2 (B))^(-1) T_t &=  epsilon_(2,t)
+$
+
+if we now apply this 'filter' to the input series $P_t$ as well
+
+$
+  phi.alt (B) (theta (B))^(-1) P_t = gamma_t
+  phi.alt_2 (B) (theta_2 (B))^(-1) P_t = gamma_(2,t)
+$
+
+then we can calculate the CCF of $epsilon_(2,t)$ and $gamma_(2,t)$ to get the coefficients of a transfer function from $T_t$ to $P_t$ and analogously for $G_t$.
+
 
 === AR(1)-X(1,1) Model<sec:3_6_ar1_x1_1>
 
@@ -794,15 +806,24 @@ $
   P_t = -phi.alt_1 P_(t-1) + omega_1 T_t + beta_1 G_t + epsilon_t
 $<eq:3_6_ar1_x1_1>
 
-With the OLS estimated parameters $hat(Theta) = [-hat(phi.alt_1) \, hat(omega_1) \, hat(beta_1)]^T = [-0.4127 \, 2.3352 \, -0.0836]^T$ we get a RMSE of $0.353$, which is a significant improvement to before, just by adding an AR component to the model. Since the ACF and CCF only confirmed, what we could already observe in the residual plots themselves, we omit them this time:
+with column vector notation design matrix
+
+$
+  X = [P_(t-1), T_t, G_t]
+$<eq:3_6_design_matrix>
+
+while it is pointed out that for the actual programmatic construction of the design matrix, for the lagged series there is a shift (of the highest order from $p, e_1, e_2$) applied because we cannot pad the series for OLS estimation.
+
+Having the OLS estimated parameters $hat(Theta) = [-hat(phi.alt_1) \, hat(omega_1) \, hat(beta_1)]^T = [-0.4127 \, 2.3352 \, -0.0836]^T$ we get a RMSE of $0.353$, which is a significant improvement to before, just by adding an AR component to the model. Since the ACF and CCF only confirmed, what we could already observe in the residual plots themselves, we omit them this time:
 
 #figure(
-  image("output/3_6_ar1_x1_1_ols_os.png"),
-  caption: [AR(1)-X(1,1) model and residual analysis with OLS estimates and its one-step predictions]
+  image("output/3_6_ar1_x1_1_ols.png"),
+  caption: [AR(1)-X(1,1) model and residual analysis, one-step predictions]
 ) <fig:3_6_ar1_x1_1_ols_os>
 
-We granted a burn-in period of 4 observations to the one-step estimates for a fairer comparison.
-From @fig:3_6_ar1_x1_1_ols_os we can conclude that alas both one-step and full OLS predictions produce significantly smaller residuals, the distribution of the residuals fails in the same ways as before. There is still a a visible seasonality to the magnitude of prediction errors. This can already be seen in the bare plot of the time-series: The steep drops and consecutive ascends are not captured correctly. While indeed a better model already, still a systematic error.
+From @fig:3_6_ar1_x1_1_ols_os we can conclude that alas the predictions produce significantly smaller residuals, the distribution of the residuals fails in the same ways as before. There is still a visible seasonality to the magnitude of prediction errors. This can already be seen in the bare plot of the time-series: The steep drops and consecutive ascends are not captured correctly. While indeed a better model already, still a systematic error.
+
+Nevertheless, we again conducted a Box-Ljung-Test, which resulted in a $0.01$ level significance from lag $k≥3$ onwards. So apparently there is statistical evidence to support the hypothesis that the residuals are independent.
 
 
 === AR(2)-X(2,2) Model<sec:3_7_ar2_x1_1>
@@ -816,11 +837,16 @@ $<eq:3_7_ar2_x2_2>
 With the OLS estimated parameters $hat(Theta) = [-hat(phi.alt_1) \, -hat(phi.alt_2) \, hat(omega_1) \, hat(omega_2) \, hat(beta_1) \, hat(beta_2)]^T = [-0.6274 \, 0.055 \, 0.2704 \, 1.4412 \, -0.0991 \, 0.037]^T$ we get a RMSE of $0.2842$, which is again an improvement to the AR(1)-X(1,1) model.
 
 #figure(
-  image("output/3_7_ar2_x2_2_ols_os.png"),
-  caption: [AR(2)-X(2,2) model and residual analysis with OLS estimates and its one-step predictions]
+  image("output/3_7_ar2_x2_2_ols.png"),
+  caption: [AR(2)-X(2,2) model and residual analysis, one-step predictions]
 ) <fig:3_7_ar2_x2_2_ols_os>
 
 While this model fits a lot tighter, the notion of not capturing the drops and steeper ascends persists. One can beautifully see this behaviour around $upright("t_hour")=75$, where there is a jump downwards in the residual and then something like a staircase upwards until the model catched up again. There are several of the 'staircases' in the residuals.
+
+However, this time the Box-Ljung-Test resulted in a $0.01$ level significance already in lag $k=1$. Therefore, the evidence for independence of the residual becomes stronger with increasing ARX model order.
+
+
+=== AIC and BIC metrics<sec:3_7_aic_bic>
 
 Now we want to delve a bit deeper into other metrics for model selection, specifically the BIC (Bayesian Information Criterion) and AIC (Akaike Information Criterion). Generically they are calculated as:
 
@@ -839,8 +865,6 @@ of observations and $p$ as the number of parameters. In our case for the
 ARX model, since we only have an AR part, the MLE becomes an OLS
 estimation analogous to @eq:3_4_ols_parameter_est, hence $upright(bold(hat(psi))) = hat(Theta)$.
 
-Here we only consider full OLS estimates and not the one-step predictions (as those did worse in every model and need a burn-in period).
-
 #figure(
   image("output/3_7_aic_bic_model_comparison.png"),
   caption: [AIC, BIC comparison of different models orders from @sec:3_5_ar0_x1_1, @sec:3_6_ar1_x1_1, @sec:3_7_ar2_x1_1]
@@ -852,59 +876,20 @@ If we look at the plot, there is a clear trend towards the more complex AR(2)-X(
 
 However, as the AIC and BIC both already punish the increased model complexity of AR(2)-X(2,2) model, but still produce a lower score, the interpretation would yield in: "more complex, but worth it". Therefore, the model selection would fall onto the AR(2)-X(2,2) model.
 
-=== One-Step Predictions & RMSE (3.8)<sec:3_8_OSPred_RMSE>
 
-When producing one-step predictions, a critical factor is to mind the burn-in period. As the model parameters are re-fitted at each step of the prediction (refer to @eq:3_5_os_pred). Taking into account the new predicted values of the series, in the first few steps, there is little data to fit on. Thus, the predictions are not very strong. This is what we refer to as the burn-in period.
+=== RMSE metric and Prediction on test-dataset<sec:3_8_RMSE_test_dataset>
 
-As we must give one-step predictions on the test-dataset (which is already quite few observations), it makes sense to include some of the last observations of the train-dataset, to counter the burn-in.
-This way, there is hopefully not much of an impact on the predictions of the test-dataset.
-Additionally, this would also be a more fair comparison to the previous exercises, as those are OLS fitted on the entire train-dataset, thus do not suffer from a burn-in, as do one-step predictions.
-
-To test out, how much of a spill from the train-dataset we need, we can check fitting the one-step prediction on *only* the test-data.
+We now use the on the training dataset estimated parameters $hat(Theta)$ and use those for one-step predictions on the test dataset with an accordingly constructed design matrix (refer to @eq:3_6_design_matrix).
 
 #figure(
-  image("output/3_8_rmse_model_comparison_only_testdata.png"),
-  caption: [RMSE comparison of different models orders from @sec:3_5_ar0_x1_1, @sec:3_6_ar1_x1_1, @sec:3_7_ar2_x1_1 on only the test dataset]
-) <fig:3_8_rmse_model_comparison_only_testdata>
-
-The decision rule on how much burn-in we grant the model is: Increase the burn-in $b$ (meaning, exclude the first $b$ observations and predictions) until there are no more negative values in the one-step predictions of $P_h$. This is a context based rule, as negative wattage for the heater, the variable $P_h$ represents, does not make sense.
-The @fig:3_8_rmse_model_comparison_only_testdata shows the results for $b=11$. Therefore, we include the last 11 samples/observations of the train-dataset into the design matrix $X$ for the one-step predictions.
-
-Now including 11 samples from the train-data as spill over, we observe the following:
-
-#figure(
-  image("output/3_8_rmse_model_comparison_train_test_spill.png"),
+  image("output/3_8_rmse_model_comparison.png"),
   caption: [RMSE comparison of different models orders from @sec:3_5_ar0_x1_1, @sec:3_6_ar1_x1_1, @sec:3_7_ar2_x1_1 on concatenation of train and test dataset]
-) <fig:3_8_rmse_model_comparison_train_test_spill>
+) <fig:3_8_rmse_model_comparison_test>
 
-On the new concatenated series, we really only need $b ≥ 6$ to not have absurd values in $P_h$ (negative or >1000), but with $b=8$, we now effectively have 64 one-step predictions as asked for in the task.
+Reflecting upon the question: Does @fig:3_8_rmse_model_comparison_test yield the same model selection as via the AIC, BIC metrics / criteria?
 
-We added 11 samples from the training data to the 64 samples of the test-data. So we fitted step-wise on a total of 64+11=75 observations. Now we allow a burn-in of 8 and remain with 64 one-step samples... so $64+11-8=64$?!
-
-That begs the questions: Where have the 3 samples gone lost?
-
-- the highest model order of 2 for the AR(2)-X(2,2) swallows 2 samples
-  in padding/cutting of the series
-- 1 samples is swallowed by the process of one-step predictions, since
-  we always look one sample back for $hat(y_(t \| t - 1))$
-- in fact, out of 64 test-data samples, we would only get 63 one-step
-  predictions, as we need to start ON the 2nd sample (t=2) to fit the
-  model on the 1st sample at:
-  $hat(y_(t \| t - 1)) = hat(y_(2 \| 2 - 1)) = hat(y_(2 \| 1))$
-- otherwise we would hit $t - 1 = 0$ which is not feasible
-
-REVISE
-- therefore the RMSE formula given in the task is actually incorrect, as it averages over 3 more values than there are one-step predictions available (64 test-data samples; 3 casualties, 2 for model order and 1 for OS-predictions)
-- that is not even considering a burn-in!
-- hence the effective number of observations fair for comparison to the previous models is much lower than 64
-- please, fucking think about what you write Peder, at least 64 fucking times, before you confuse the shit out of people for hours!
-
-Reflecting upon the question: Does this yield the same model selection as via the AIC, BIC metrics / criteria?
-
-Yes and no. Only going via the RMSE, we could conclude from the first approach, where we only used pure test-dataset samples, that we should select the AR(2)-X(2,2) model.
-However, after adjusting the setting (to have a spill of samples from the train-dataset) for a technically more fair comparison, the RMSE would yield the conclusion to select the AR(1)-X(1,1).
-However, to put this into perspective, the RMSE is overall much lower with the second modelling approach. This makes sense makes sense, since there is much more information available to the model. This lets us conclude that there is a lot of relevant information in the further past.
-Yet, there seems to be a notion that a model with shorter lag, an AR(1) component, captures this better than a longer lag. This could be interpreted as that past information is overall valuable, but the series behaviour is ultimately very short-term oriented.
+Yes. We already observed on the AIC and BIC on the training dataset that higher model order improves the predictive performance. Even on the distribution of residuals, we could observe increasing statistical evidence for independence of those (via Box-Ljung-Test).
+Now we have validated via RMSE on the test dataset that our model generalises well. The AR(2)-X(2,2) model also performs the best in this setting, showing that we have not overfitted with increasing complexity.
 
 
 === k-Step Predictions<sec:3_9_kstep_pred>
@@ -957,7 +942,7 @@ It could also be an option to reduce the measurement interval from hourly to 5-m
 
 == Conclusions<sec:3_10_conclusions>
 
-*Some Reflections on the model selection process (@sec:3_6_ar1_x1_1 to @sec:3_8_OSPred_RMSE):*
+*Some Reflections on the model selection process (@sec:3_5_ar0_x1_1 to @sec:3_7_ar2_x1_1):*
 
 The construction of the selection process via the exercise objectives, makes the selection process not a fair, comparable process, for a number of reasons:
 
