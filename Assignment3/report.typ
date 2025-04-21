@@ -107,7 +107,7 @@ $
   ρ(k) &= -ϕ_1 ρ(k-1) - ϕ_2 ρ(k-2)\
 $ <eq:1_autocorrelation_recursion>
 
-Notably by stationary it follows $ρ(-k) = ρ(k)$ and from @eq:1_autocorrelation we find $ρ(0) = 1$,
+Notably, by stationary it follows $ρ(-k) = ρ(k)$ and from @eq:1_autocorrelation we find $ρ(0) = 1$,
 which allows us to build a recursive relation for $ρ(k)$ from:
 
 $
@@ -539,12 +539,6 @@ $
 $
 
 Where $c$ is a constant offset, $ϕ_i$ are the AR coefficients, $ω_(j, k)$ are the exogenous coefficients and $ε_t$ is a white-noise such that $ε_t ∼ 𝒩(0, σ_ε^2)$. $J$ refers to the number of exogenous variables such that $j ∈ {1, 2, …, J}$ become the indices of the exogenous variables.
-
-TODO FINISH REFACTOR HERE
-
-$
-Y_t = c - sum_(i = 1)^p phi.alt_i Y_(t - i) + sum_(i = 0)^(e_1) omega_(1 \, i + 1) X_(1 \, t - i) + sum_(i = 0)^(e_2) omega_(2 \, i + 1) X_(2 \, t - i) + . . . + epsilon_t
-$<eq:3_4_generic_arx>
 
 To further unify notation, we assume a model, where ${ T_t }$ represents the series $T_(upright("delta"))$, ${ G_t }$ is the series $G_v$ and ${P_t }$ is the series $P_h$ for $t in { 1 \, . . . \, 167 }$ in the training dataset.
 
