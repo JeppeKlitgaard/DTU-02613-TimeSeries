@@ -269,8 +269,6 @@ in which case it is again useful to plot the time series itself.
 Lastly, the autocorrelation function provides no information about the process realisations
 at specific points in time, which is often useful for understanding or interpreting the underlying process.
 
-The code used for the simulations can be found in the attached notebook `JK_1.ipynb`.
-
 #pagebreak()
 = Predicting Monthly Solar Power <sec:2_predicting_monthly_solar_power>
 
@@ -511,8 +509,6 @@ This is simply a consequence of linearising the data in order to fit it to our l
 From inspection, we find that the prediction intervals are likely too wide during the summer months
 where power generation is at its peak,
 due to the overly large effect of the variance during the winter months on the residual error estimates.
-
-The implementation of the prediction intervals can be found in the attached Jupyter Notebook `JK_2.ipynb`.
 
 #pagebreak()
 = An ARX Model for the Heating of a Box <sec:3>
@@ -963,13 +959,22 @@ It could also be an option to reduce the measurement interval from hourly to 5-m
 
 == Conclusions <sec:3_10_conclusions>
 
-TODO MORE FAFF
+We conclude based on AIC, BIC, and RMSE criteria that an AR(2)-X(2,2) model is the best trade-off between performance and complexity for the data set.
+More complex models may prove superior, but may require larger amounts of data
+to be able to estimate the parameters of the model accurately.
 
-The construction of the selection process was a step by step increase in model complexity.
+The model has a high predictive performance even for higher $k$-step forecasting and captures the underlying structure of the data well. The model is able to accurately
+predict power generation several hours or even days into the future.
+The model is stable and robust to unit shocks from the exogenous variables, which is a desirable property for a model of this type.
 
-The AIC, BIC are calculated on the training dataset, because we needed the log-likelihood. We basically test if AIC and BIC yield generalisable conclusions, hence, if our decision on model complexity paid of for the test dataset.
+We find that simpler models without autoregressive components or transfer function
+features are not able to capture the underlying structure of the data and yield poor predictive performance.
 
-Our addition of the Box-Ljung-Test, fostered the results and contributed to the decision of a more complex model.
-It would be interesting to see, when the tipping point arrives, where additional model complexity is not worth it anymore. In the Elbow plot @fig:3_7_aic_bic_model_comparison we could already see a decreasing gradient.
+It would be interesting to see where the tipping between predictive power and complexity lies. In the elbow plot @fig:3_7_aic_bic_model_comparison we could already see a decreasing gradient.
+
+== Notes <sec:3_11_notes>
+
+We were unable to attach the code to the report for hand-in.
+The code is available upon request.
 
 #bibliography("report.bib")
