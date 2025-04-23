@@ -107,7 +107,7 @@ $
   ρ(k) &= -ϕ_1 ρ(k-1) - ϕ_2 ρ(k-2)\
 $ <eq:1_autocorrelation_recursion>
 
-Notably by stationary it follows $ρ(-k) = ρ(k)$ and from @eq:1_autocorrelation we find $ρ(0) = 1$,
+Notably, by stationary it follows $ρ(-k) = ρ(k)$ and from @eq:1_autocorrelation we find $ρ(0) = 1$,
 which allows us to build a recursive relation for $ρ(k)$ from:
 
 $
@@ -540,12 +540,6 @@ $
 
 Where $c$ is a constant offset, $ϕ_i$ are the AR coefficients, $ω_(j, k)$ are the exogenous coefficients and $ε_t$ is a white-noise such that $ε_t ∼ 𝒩(0, σ_ε^2)$. $J$ refers to the number of exogenous variables such that $j ∈ {1, 2, …, J}$ become the indices of the exogenous variables.
 
-TODO FINISH REFACTOR HERE
-
-$
-Y_t = c - sum_(i = 1)^p phi.alt_i Y_(t - i) + sum_(i = 0)^(e_1) omega_(1 \, i + 1) X_(1 \, t - i) + sum_(i = 0)^(e_2) omega_(2 \, i + 1) X_(2 \, t - i) + . . . + epsilon_t
-$<eq:3_4_generic_arx>
-
 To further unify notation, we assume a model, where ${ T_t }$ represents the series $T_(upright("delta"))$, ${ G_t }$ is the series $G_v$ and ${P_t }$ is the series $P_h$ for $t in { 1 \, . . . \, 167 }$ in the training dataset.
 
 == Exploratory Dependency Analysis <sec:3_1>
@@ -753,109 +747,169 @@ We can also confirm, that this process is stable, since $sum_(k=1)^(infinity) |v
 Because of this stability the model is rather robust to unit shocks from both exogenous variables, more robust from shocks of $G_v$ than from $T_t$ in fact. As a consequence, with this model, we can accept a certain degree of fluctuation in the exogenous variables, without having to worry about a big impact on the predictive performance of our model. For example, the effect of a measurements error or sensor defect in $T_d$ or $G_v$ that acts as a shock to our system, will not last for very long.
 Thus, having a larger order for the AR part of our model pretects against shocks from the other variables. On the other hand, the model is more vulnerable to sudden changes in auto-regressive behaviour.
 
-== Model Selection<sec:3_5_to_3_8_model_selection>
+== Linear Regression Model <sec:3_5>
 
-In this section, we will stick to the notation convention for ARX models introduced above and create a selection of models for comparison.
-
-=== Linear Regression <sec:3_5_ar0_x1_1>
-
-For the simple linear regression (OLS) model we have:
-
+We are given a linear model with the following form:
 $
-  P_t = omega_1 T_t + beta_1 G_t + epsilon_t
-$<eq:3_5_ols_model>
-
-with the design matrix: $X = [T_t \, G_t]$ for the column-vectors
-and with $Theta = [omega_1 \, beta_1]^T$ as parameter vector. The estimation (fitting the model) for $hat(Theta)$ will be analogous to @eq:3_4_ols_parameter_est.
-
-The resulting parameters are $hat(Theta) = [3.8948 \, -0.1099]^T$ with a corresponding RMSE of $approx 5.407$. Thus we have our linear regression predictions as $X dot.op hat(Theta) = hat(P_t)$ for the one-step predictions (simply shorter as straight matrix multiplication). The iterative formulation would be:
-
+  P_(h,t) = ω_1 T_("delta",t) + ω_2 G_(v,t) + ε_t\
 $
-  hat(P)_(t+k|t) = X_(t+k) dot.op hat(Theta)
-$<eq:3_5_os_pred>
 
-for $k=1$ with $X_(t+k) &= [T_(t+k), G_(t+k)]$ and $hat(epsilon)_(t) &= P_(t+k) - hat(P)_(t+k|t)$.
+Where $ε_t ~ 𝒩(0, σ^2)$ and assumed to be i..i.d. (independent and identically distributed).
+
+We fit such a model to the data and produce the estimation shown in @fig:3_5_forecast.
 
 #figure(
-  image("output/3_5_residual_analysis_ols.png"),
-  caption: [model and residual analysis of one-step predictions]
-) <fig:3_5_residual_analysis_ols>
+  image("output/3_5_forecast.png"),
+  caption: [Linear regression model with $T_"delta"$ and $G_v$ as exogenous variables.]
+) <fig:3_5_forecast>
 
-In @fig:3_5_residual_analysis_ols, we can observe that the one-step prediction approach does not quite capture the movement as fast, especially in the sharp drops of $P_t$. The ACF and CCF plots show, that the residuals are far from being white-noise (which is the desirable state; then the error is $epsilon_t$). This indicates a systematic error in the predictions, so there is room for improvement of the model. This can be validated via a Box-Ljung-Test, which until a lag of $k=73$ does not show a significant p-value, so the residuals are not independent and there is definitely some auto-regressive behaviour.
+Additionally we evaluate the residuals during the training period and one-step prediction erorrs
+for the test data set in @fig:3_5_errors.
 
-The model could benefit from a pre-whitening. This would fit an ARMA model on each of the input variables $T_t$ and $G_t$. 
+#figure(
+  image("output/3_5_errors.png"),
+  caption: [Residual analysis of the linear regression model.]
+) <fig:3_5_errors>
+
+We observe that the errors, here understood to be the residuals for the training data set and the one-step prediction errors for the test data set, look relatively good.
+We have chosen to plot the test data series and predictions here as well in order
+to be able to gauge the generalisation performance of the model.
+We conduct an analysis of the autocorrelation functions in @fig:3_5_acf.
+
+#figure(
+  image("output/3_5_acf.png"),
+  caption: [Autocorrelation of the residuals of the linear regression model.]
+) <fig:3_5_acf>
+
+In @fig:3_5_acf we observe there remain significant correlations in the residuals,
+which suggests that the model is not fully capturing the underlying structure of the data.
+
+To further investigate this, we employ a cross-correlation analysis of the residuals and the exogenous variables in @fig:3_5_ccf.
+
+#figure(
+  image("output/3_5_ccf.png"),
+  caption: [Cross-correlation of the residuals of the linear regression model with the exogenous variables.]
+) <fig:3_5_ccf>
+
+Here we observe that some significant correlations remain between the errors and the exogenous variables, which suggests that the model may not be fully capturing the underlying structure of the data and a more complex model may be required.
+
+In order to more formally substantiate this, we employ the Ljung-Box test on the residuals of the model, which reveals that significant correlations remain in the residuals of the model for all choices of lags $k$.
+
+The fact that the autocorrelation in @fig:3_5_acf shows significant correlations with past values
+strongly suggests that a model with an autoregressive component may be more appropriate.
+Generally such models of linear time-invarant systems (LTI) are well-described by
+the use of _transfer functions_, which are a powerful tool for modelling the relationship between the input and output of a system. In the case of an ARX model, its transfer function
+contains the appropriate AR components expressed as backshifts of the input series.
+
+In order to build up a model which better captures the underlying structure of the data,
+we may use the idea of _transfer function building_, in which we build up a model from the residuals of a simpler model by employing _pre-whitening_, in which models are used as _filters_ and spikes in the CCF plots are used to identify a candidate lag structure.
+
+Pre-whitening would involve fitting an ARMA model on each of the input variables $T_t$ and $G_t$.
 
 $
   phi.alt (B) G_t &= theta (B) epsilon_t
   phi.alt_2 (B) T_t &= theta_2 (B) epsilon_t
 $
 
-when re-arranged, this will be transformed into the white-noise component
+Which when re-arranged will be transformed into the white-noise component:
 
 $
   phi.alt (B) (theta (B))^(-1) G_t &=  epsilon_t
   phi.alt_2 (B) (theta_2 (B))^(-1) T_t &=  epsilon_(2,t)
 $
 
-if we now apply this 'filter' to the input series $P_t$ as well
+Which we can then apply as a 'filter' to the input series $P_t$:
 
 $
   phi.alt (B) (theta (B))^(-1) P_t = gamma_t
   phi.alt_2 (B) (theta_2 (B))^(-1) P_t = gamma_(2,t)
 $
 
-then we can calculate the CCF of $epsilon_(2,t)$ and $gamma_(2,t)$ to get the coefficients of a transfer function from $T_t$ to $P_t$ and analogously for $G_t$.
+And then calculate the CCF of $epsilon_(2,t)$ and $gamma_(2,t)$ to get the coefficients of a transfer function from $T_t$ to $P_t$ and analogously for $G_t$.
+
+This is beyond the scope of this assignment, where we will instead follow the model
+building outlined in the assignment description.
 
 
-=== AR(1)-X(1,1) Model<sec:3_6_ar1_x1_1>
+== AR(1)-X(1,1) Model <sec:3_6>
 
-Now, we deal with a model that supplements the previous model by one AR component (but already modeled in @eq:3_4_ar1_x1_1):
-
+This time we employ a first order ARX model:
 $
-  P_t = -phi.alt_1 P_(t-1) + omega_1 T_t + beta_1 G_t + epsilon_t
-$<eq:3_6_ar1_x1_1>
-
-with column vector notation design matrix
-
+  P_(h,t) = -ϕ_1 P_(h,t-1) + ω_1 T_("delta",t) + ω_2 G_(v,t) + ε_t\
 $
-  X = [P_(t-1), T_t, G_t]
-$<eq:3_6_design_matrix>
 
-while it is pointed out that for the actual programmatic construction of the design matrix, for the lagged series there is a shift (of the highest order from $p, e_1, e_2$) applied because we cannot pad the series for OLS estimation.
+Where $ϕ_1$ is the AR coefficient, $ω_1$ and $ω_2$ are the exogenous coefficients and $ε_t$ is a white-noise process as before.
 
-Having the OLS estimated parameters $hat(Theta) = [-hat(phi.alt_1) \, hat(omega_1) \, hat(beta_1)]^T = [-0.4127 \, 2.3352 \, -0.0836]^T$ we get a RMSE of $0.353$, which is a significant improvement to before, just by adding an AR component to the model. Since the ACF and CCF only confirmed, what we could already observe in the residual plots themselves, we omit them this time:
+We first perform the forecasting and estimation, as shown in @fig:3_6_forecast.
 
 #figure(
-  image("output/3_6_ar1_x1_1_ols.png"),
-  caption: [AR(1)-X(1,1) model and residual analysis, one-step predictions]
-) <fig:3_6_ar1_x1_1_ols_os>
+  image("output/3_6_forecast.png"),
+  caption: [AR(1)-X(1,1) model with $T_"delta"$ and $G_v$ as exogenous variables.]
+) <fig:3_6_forecast>
 
-From @fig:3_6_ar1_x1_1_ols_os we can conclude that alas the predictions produce significantly smaller residuals, the distribution of the residuals fails in the same ways as before. There is still a visible seasonality to the magnitude of prediction errors. This can already be seen in the bare plot of the time-series: The steep drops and consecutive ascends are not captured correctly. While indeed a better model already, still a systematic error.
-
-Nevertheless, we again conducted a Box-Ljung-Test, which resulted in a $0.01$ level significance from lag $k≥3$ onwards. So apparently there is statistical evidence to support the hypothesis that the residuals are independent.
-
-
-=== AR(2)-X(2,2) Model<sec:3_7_ar2_x1_1>
-
-This time we add one order to the AR and both exogenous parts:
-
-$
-  P_t = -phi.alt_1 P_(t-1) - phi.alt_2 P_(t-2) + omega_1 T_t + omega_2 T_(t-1) + beta_1 G_t + beta_2 G_(t-1) + epsilon_t
-$<eq:3_7_ar2_x2_2>
-
-With the OLS estimated parameters $hat(Theta) = [-hat(phi.alt_1) \, -hat(phi.alt_2) \, hat(omega_1) \, hat(omega_2) \, hat(beta_1) \, hat(beta_2)]^T = [-0.6274 \, 0.055 \, 0.2704 \, 1.4412 \, -0.0991 \, 0.037]^T$ we get a RMSE of $0.2842$, which is again an improvement to the AR(1)-X(1,1) model.
+With subsequent error analysis shown in @fig:3_6_errors.
 
 #figure(
-  image("output/3_7_ar2_x2_2_ols.png"),
-  caption: [AR(2)-X(2,2) model and residual analysis, one-step predictions]
-) <fig:3_7_ar2_x2_2_ols_os>
+  image("output/3_6_errors.png"),
+  caption: [Residual analysis of the AR(1)-X(1,1) model.]
+) <fig:3_6_errors>
 
-While this model fits a lot tighter, the notion of not capturing the drops and steeper ascends persists. One can beautifully see this behaviour around $upright("t_hour")=75$, where there is a jump downwards in the residual and then something like a staircase upwards until the model catched up again. There are several of the 'staircases' in the residuals.
+With ACF and CCF analysis shown in @fig:3_6_acf and @fig:3_6_ccf respectively.
 
-However, this time the Box-Ljung-Test resulted in a $0.01$ level significance already in lag $k=1$. Therefore, the evidence for independence of the residual becomes stronger with increasing ARX model order.
+#figure(
+  image("output/3_6_acf.png"),
+  caption: [ACF of the residuals of the AR(1)-X(1,1) model.]
+) <fig:3_6_acf>
 
+#figure(
+  image("output/3_6_ccf.png"),
+  caption: [CCF of the residuals of the AR(1)-X(1,1) model with the exogenous variables.]
+) <fig:3_6_ccf>
 
-=== AIC and BIC metrics<sec:3_7_aic_bic>
+Comparing @fig:3_5_acf and @fig:3_6_acf we observe that the autocorrelation of the residuals has been significantly reduced, the same of which is true for the cross-correlations shown in @fig:3_6_ccf. This suggests that this only slightly more complex model describes the underlying structure of the process much better than the linear regression model. A Ljung-Box test suggests that the residuals do not have significant autocorrelation left.
+
+== AR(2)-X(2,2) Model <sec:3_7>
+
+Lastly, we are given a second order ARX model:
+$
+  P_(h,t) =
+    -ϕ_1 P_(h,t-1) - ϕ_2 P_(h,t-2)
+    + ω_(1,0) T_("delta",t) + ω_(1,1) T_("delta",t-1)
+    + ω_(2,0) G_(v,t) + ω_(2,1) G_(v,t-1)
+    + ε_t
+$
+
+This yields the following estimations:
+
+#figure(
+  image("output/3_7_forecast.png"),
+  caption: [AR(2)-X(2,2) model with $T_"delta"$ and $G_v$ as exogenous variables.]
+) <fig:3_7_forecast>
+
+Yielding the following error analysis:
+
+#figure(
+  image("output/3_7_errors.png"),
+  caption: [Residual analysis of the AR(2)-X(2,2) model.]
+) <fig:3_7_errors>
+
+With ACF and CCF analysis shown in @fig:3_7_acf and @fig:3_7_ccf respectively:
+
+#figure(
+  image("output/3_7_acf.png"),
+  caption: [ACF of the residuals of the AR(2)-X(2,2) model.]
+) <fig:3_7_acf>
+
+#figure(
+  image("output/3_7_ccf.png"),
+  caption: [CCF of the residuals of the AR(2)-X(2,2) model with the exogenous variables.]
+) <fig:3_7_ccf>
+
+We cannot directly observe an improvement when only looking at the ACF and CCF plots, and
+it may be difficult to understand whether the increased model complexity is justified.
+Again a Ljung-Box test suggests that the residuals do not have significant autocorrelation left.
+
+=== AIC and BIC <sec:3_7_ic>
 
 Now we want to delve a bit deeper into other metrics for model selection, specifically the BIC (Bayesian Information Criterion) and AIC (Akaike Information Criterion). Generically they are calculated as:
 
@@ -876,7 +930,7 @@ estimation analogous to @eq:3_4_ols_parameter_est, hence $upright(bold(hat(psi))
 
 #figure(
   image("output/3_7_aic_bic_model_comparison.png"),
-  caption: [AIC, BIC comparison of different models orders from @sec:3_5_ar0_x1_1, @sec:3_6_ar1_x1_1, @sec:3_7_ar2_x1_1]
+  caption: [AIC, BIC comparison of different models orders from @sec:3_5, @sec:3_6, @sec:3_7]
 ) <fig:3_7_aic_bic_model_comparison>
 
 This is a classic Elbow curve. In various modelling fields, information theoretical measures or straight residual measures (such as MSE, etc.) are plotted against different model variations. The general idea is, to deduce at which point, there is a good trade-off between parameters of the model and the model performance.
@@ -886,13 +940,13 @@ If we look at the plot, there is a clear trend towards the more complex AR(2)-X(
 However, as the AIC and BIC both already punish the increased model complexity of AR(2)-X(2,2) model, but still produce a lower score, the interpretation would yield in: "more complex, but worth it". Therefore, the model selection would fall onto the AR(2)-X(2,2) model.
 
 
-=== RMSE metric and Prediction on test-dataset<sec:3_8_RMSE_test_dataset>
+== RMSE metric and Prediction on test-dataset<sec:3_8>
 
-We now use the on the training dataset estimated parameters $hat(Theta)$ and use those for one-step predictions on the test dataset with an accordingly constructed design matrix (refer to @eq:3_6_design_matrix).
+We now use the on the training dataset estimated parameters $hat(Theta)$ and use those for one-step predictions on the test dataset with an accordingly constructed design matrix.
 
 #figure(
   image("output/3_8_rmse_model_comparison.png"),
-  caption: [RMSE comparison of different models orders from @sec:3_5_ar0_x1_1, @sec:3_6_ar1_x1_1, @sec:3_7_ar2_x1_1 on concatenation of train and test dataset]
+  caption: [RMSE comparison of different models orders from @sec:3_5, @sec:3_6, @sec:3_7 on concatenation of train and test dataset]
 ) <fig:3_8_rmse_model_comparison_test>
 
 Reflecting upon the question: Does @fig:3_8_rmse_model_comparison_test yield the same model selection as via the AIC, BIC metrics / criteria?
@@ -901,7 +955,7 @@ Yes. We already observed on the AIC and BIC on the training dataset that higher 
 Now we have validated via RMSE on the test dataset that our model generalises well. The AR(2)-X(2,2) model also performs the best in this setting, showing that we have not overfitted with increasing complexity.
 
 
-=== k-Step Predictions<sec:3_9_kstep_pred>
+== $k$-Step Predictions<sec:3_9>
 
 We selected the AR(2)-X(2,2) model, mainly because of the AIC, BIC selection criteria. From experience, they produce a very reliable selection process.
 We provide a selection of $k$ step-widths, which are usually choices that would make sense in real-life settings: 12h, 24h, 48h.
@@ -911,7 +965,7 @@ We provide a selection of $k$ step-widths, which are usually choices that would 
   caption: [k-step predictions for intervals]
 ) <fig:3_9_kstep_predictions_selection>
 
-Beyond that we look at a plot of the RMSE against the step-width k with the intend to draw some conclusions about the error behaviour over longer periods of prediction. 
+Beyond that we look at a plot of the RMSE against the step-width $k$ with the intend to draw some conclusions about the error behaviour over longer periods of prediction.
 
 #figure(
   image("output/3_9_rmse_kstep_pred_wo_b.png"),
@@ -938,9 +992,9 @@ Given that knowledge on the historic data, it would be wiser to simply accept an
 
 It could also be an option to reduce the measurement interval from hourly to 5-min intervals, to be able to react quicker and counter prediction uncertainty.
 
-== Conclusions<sec:3_10_conclusions>
+== Conclusions <sec:3_10_conclusions>
 
-*Some Reflections on the model selection process (@sec:3_5_ar0_x1_1 to @sec:3_7_ar2_x1_1):*
+*Some Reflections on the model selection process (@sec:3_5 to @sec:3_7):*
 
 The construction of the selection process was a step by step increase in model complexity.
 
