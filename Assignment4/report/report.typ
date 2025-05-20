@@ -225,9 +225,54 @@ Alternatively, fewer or a single realisation may be used if the number of observ
 
 == Non-Gaussian Noise <sec:1.5>
 
+Our Kalman Filter was derived using the assumption of Gaussian noise, which
+is often reasonable in practice due to the manifestation of the Central Limit Theorem. However, there are many cases where the underlying process may not be Gaussian, which we seek to explore by employing the Kalman Filter without modification on non-Gaussian processes.
 
+To this end, we make a number of realisations using the Student's t-distribution in place of a normal distribution. Notably, we let the observation noise $e_(2,t)$ remain normally distributed, as this will often be the case in practice per the
+Central Limit Theorem.
 
+As such, our new process is given as:
+$
+  X_t &= a X_(t - 1) + b + e_(1,t) &&wider e_(1,t) ~ λ_t (ν, σ_1^2) \
+  Y_t &= X_t + e_(2,t) &&wider e_(2,t) ~ 𝒩(0, σ_2^2 = 1),
+$ <eq:1.5>
 
+Where $λ_t$ is a Student's t-distribution with $ν$ degrees of freedom and scale parameter $σ_1^2$.
 
+To appreciate the effect of the non-Gaussian noise, we investigate the probability density function of the Student's t-distribution with varying degrees of freedom, $ν$, and a normal distribution, which is shown in @fig:1.5_distributions.
+
+#figure(
+  image(
+    "output/1_5_1_distributions.png",
+  ),
+  caption: [Probability density function of the Student's t-distribution with varying degrees of freedom $ν∈{1, 2, 5, 100}$ and a standard normal distribution.],
+) <fig:1.5_distributions>
+
+We note that as the degrees of freedom $ν$ increases, the Student's t-distribution approaches the normal distribution as expected.
+For $ν=1$, the distribution is very heavy-tailed, which is expected to have a significant effect on the Kalman Filter. In effect, the underlying process is more likely to have noise realisations that are far from the mean, which can
+lead to large jumps in the latent state vector $X_t$.
+
+Given that the Kalman Filter models the latent state vector as having Gaussian noise, it will be unable to account for the large number of outliers that are likely to occur in low-$ν$ Student's t-distribution.
+As a result, Kalman Filter will estimate an inflated estimate of the variance of the latent state vector.
+
+With this in mind, the Kalman Filter will still usable in many circumstances,
+thought with reduced performance. If the underlying process noise is known,
+the filter could be modified to account for the non-Gaussian noise, though this is outside the scope of this assignment.
+
+Additionally, we note that the confidence intervals calculated in @sec:1.3 are no longer valid, as they are based on the assumption of Gaussian noise.
+
+Next, we can investigate the effect of the non-Gaussian noise on the process
+described by @eq:1.5 by simulating realisations of the process with varying degrees of freedom $ν$ and comparing against the Gaussian process, which is the limit $ν=∞$.
+
+#figure(
+  image(
+    "output/1_5_observations.png",
+  ),
+  caption: [Observations $Y_t$ of the processes given by @eq:1.5 with t-distributed process noise. Parameters are $A = 0.9, B = 1, σ_1^2 = 1, σ_2^2 = 1$ and $X_0 = 5$],
+) <fig:1.5_observations>
+
+= Modelling a Transformer Station <sec:2>
+
+...
 
 #bibliography("report.bib")
