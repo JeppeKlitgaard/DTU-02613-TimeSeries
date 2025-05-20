@@ -33,3 +33,15 @@ def plot_residual_diagnostics(residuals, series_name:str="Residuals"):
 
     plt.tight_layout()
     plt.show()
+
+def plot_state_space():
+    pass
+
+def plot_obervations(y_pred, df):
+    plt.figure(figsize=(10,4), dpi=300)
+    plt.title("Transformer Station Temperature")
+    plt.plot(y_pred, label="$\hat{Y}_t$")
+    plt.plot(df["Y"], label="$Y_t$")
+    plt.xlabel("$t$ time (hours)")
+    plt.ylabel("$Y_t$ in ◦C")
+    plt.legend()
