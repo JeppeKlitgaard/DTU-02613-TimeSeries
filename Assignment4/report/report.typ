@@ -12,7 +12,7 @@
     ] else [
     #set align(center)
     #set text(10pt, fill: gray)
-      02417 Times Series Analysis - Assignment 3
+      02417 Times Series Analysis - Assignment 4
   ]
   }
 )
@@ -126,7 +126,7 @@ $
   \
   "Filtered State" &&wider hat(X)_(t|t) &= hat(X)_(t|t-1) + K_t (Y_t - C hat(Y)_(t|t-1)) &&wider (10.73)\
   "Filtered State Variance" &&wider Var[hat(X)_(t|t)] &= (1 - K_t) Var[hat(X)_(t|t-1)] &&wider (10.74)\
-$
+$ <eq:1.3_Kalman_filter>
 
 Where rather than regurgitating the lengthy derivations, we refer to the relevant equations in the course textbook @Madsen_2008[Chapt.~10].
 
@@ -166,7 +166,7 @@ $
   &∼ 𝒩(C(X_(t+1) - A hat(X)_(t|t) - B), σ_2)\
   &∼ 𝒩(hat(X)_(t+1|t+1), σ_2)\
   &= 1/(σ_2 sqrt(2π)) exp(- (Y_(t+1) - hat(X)_(t+1|t+1))^2 / σ^2)
-$
+$ <eq:1.4_implicit_Kalman_likelihood>
 
 From which we are able to construct the log-likelihood:
 $
@@ -273,6 +273,82 @@ described by @eq:1.5 by simulating realisations of the process with varying degr
 
 = Modelling a Transformer Station <sec:2>
 
-...
+In this section, we will be using simple state-space models (SSMs) to gain insights into the temperature of an electrical transformer station. 
+We are given a dataset with 168 observations as dependent variable $Y_t$ and 3 exogenous variables $T_(a \, t), Phi_(s \, t), Phi_(I \, t)$ which describe the outdoor temperature for the transformer in degrees Celsius, the horizontal global solar radiation at the station and the electrical load on the transformer.
+
+== Exploratory Analysis <sec:2_1>
+
+#figure(
+  image(
+    "output/2_1_exo_y_plot.png",
+  ),
+  caption: [Given observation $Y_t$ and exogenous variables $T_(a \, t), Phi_(s \, t), Phi_(I \, t)$],
+) <fig:2.1_exo_y_plot>
+
+In @fig:2.1_exo_y_plot, there is very clearly a seasonality for day/night-cycles in all variables. The solar radiation $Phi_(s \, t)$ drops to $0$ during the night, which the load $Phi_(I \, t)$ mirrors almost exactly. It has a slightly quicker drop, once the sun is setting and during the peaks it
+displays a wiggle, which suggests some sort of load controller or a load maximum with excess being discharged. Lower peaks or crumples in the radiation curve could be explained by cloud cover. A curious thing to notice, is that the load on the transformer $Phi_(I \, t)$ appears to have a quicker attack-time to rise, than the solar radiation $Phi_(s \, t)$. 
+
+Intuitively, we would expect the solar radiation to lead and load to lag. The $Y_t$ temperature follows $Phi_(s \, t)$ showing some cool-down period, once solar radiation dropped, hence a slower decay in temperature. Outdoor temperature $T_(a \, t)$ not only follows the solar radiation, hence daily 24h seasonality, but also exhibits a longer period seasonality, which could be climate and wheather effects.
+
+Overall, we can actually deduce a lot from just outdoor temperature and solar radiation cycles, especially the uninterrupted (unclouded) ones. When inspecting the graph, we can deduce about 17h of daylight, which excludes locations betwee $approx plus.minus 54$ degrees N/S. 
+In the southern-hemisphere there is only \'Tierra de Fuego\' the southern cape of Latin America that is still land-mass, but it does not match the temperature profile (as even in summer, for the long daylight hours, it has max. temperatures of about 8 degrees Celsius). One could possible match the outdoor temperature with weather data to deduce a more
+accurate location.
+
+
+== 1D state-space model <sec:2_2_1D_SSM>
+
+The goal here is to fit (estimate the parameters) of the following model via the Kalman-Filter and MLE:
+
+$
+  X\_{t+1} = a X\_t + B u\_t + e\_{1,t} \\\\
+  Y\_t = c X\_t + e\_{2,t}
+$ <eq:2.2_1d_ssm>
+
+with:
+- $u_t = [T_(a \, t) \, Phi_(s \, t) \, Phi_(I \, t)]^tack.b in bb(R)^(1 times 3)$
+- $a in bb(R) \, B in bb(R)^(1 times 3) \, c in bb(R)$
+- $e_(1 \, t) in bb(R) \, e_(2 \, t) in bb(R)$
+- $arrow.r.double X_t in bb(R)$
+
+For the fitting, the following contraints were set: The inital value for the hidden-state value was chosen at $X_0 = 20$ and $Sigma_(t+1 | t)^(x x)=1.0$, the parameters were initialized as $a=0.8 \, B=[0.05, 0.1, 0.1]^T \, c=1, sigma_1^2=log(2), sigma_2^2=log(2)$.
+All entries of $a, B, c$ were constrained in the interval $[-2,2]$, while $sigma_1^2 \, sigma_2^2$, the variances of $e_(1 \, t) \, e_(2 \, t)$ were constrained in $[1e-3, log(10)]$.
+
+These values were chosen somewhat arbitrarily (based on what worked well) within the boundry of the hints given in the exercise.
+
+We fitted the model analogously to the framework introduced in @eq:1.3_Kalman_filter and @eq:1.4_implicit_Kalman_likelihood (for which the code can be found in the attached `2.ipynb` file). The Kalman-Filter provided predictions for the hidden-state, which where the basis for our negative log-likelihood to minimize.
+The resulting estimated parameters rounded to the 4th decimal digit are:
+
+$$
+  a = 0.7906 \, B=[0.1313 \, 0.0031 \, 0.2524]^T \, c=0.8863 \, sigma_1 = 1e-3 \, sigma_2 = 1e-3
+$$ <eq:2.2_parameter_estimates>
+
+It was notable, that the variances $sigma_1^2 \, sigma_2^2$ were always pushed to the lower boundary of the given contraint, no matter the initialization. This could imply, that the model can explain the observations $Y_t$ very well without added noise, or that the noise in the system is not of additive nature.
+
+#figure(
+  image(
+    "output/2_2_predicted_yt_1d.png",
+  ),
+  caption: [given observation $Y_t$ compared to the output prediction of our @eq:2.2_1d_ssm model, based on the parameters @eq:2.2_parameter_estimates],
+) <fig:2.2_predicted_observations>
+
+@fig:2.2_predicted_observations shows that our simple model captures the dynamics of $Y_t$ relatively well. It does not perform well on the first $50$ hours, most likely because the data is more noisy for cloud-cover wheather conditions. Additionally, we can observe that $B_(1,3)$ is the highest coefficient in the @eq:2.2_1d_ssm model and is the factor to exogenous variable $Phi_(I,t)$, the load. As this variable shows the noisiest behaviour for that period, the 'culprit' is clear.
+
+Looking at the residuals (in this case equivalent to the 'innovation') in @fig:2.2_residual_diagnostics, we can observe that they are approximately normally distributed (with small exceptions in the extreme value quantiles in the QQ plot). Hence, we do not diagnose a systematic error with the model. 
+
+#figure(
+  image(
+    "output/2_2_residual_diagnostics_1d.png",
+  ),
+  caption: [residual $hat(y)_t - Y_t$ of true temperature and the output prediction of our @eq:2.2_1d_ssm model, based on the parameters @eq:2.2_parameter_estimates],
+) <fig:2.2_residual_diagnostics>
+
+Beyond, we report the AIC and BIC as model selection criteria with $text("AIC")=495.15, text("BIC")=517.02$. In this setting, the BIC 'advantage' of penalizing model complexity heavier than AIC already kicks-in, since with $p=7, n=168 arrow.r.double 2p < log(n)p$.
+
+
+– Are there periods where the model performs poorly (e.g., daytime peaks)?
+– What do the estimated parameters tell you about the influence of load, solar radiation,
+and outdoor temperature?
+• Hint: Consider the physical meaning of the parameters (e.g., effect of load on temperature
+rise).
 
 #bibliography("report.bib")

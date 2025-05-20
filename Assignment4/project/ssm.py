@@ -204,7 +204,7 @@ def kalman_loglik_1d(par, df):
 
     T = len(Y)
     x_pred = 20.0
-    P_pred = 10.0
+    P_pred = 1.0 #10.0
 
     loglik = 0.0
     for t in range(T):
