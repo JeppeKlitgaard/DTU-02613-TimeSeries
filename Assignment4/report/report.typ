@@ -57,7 +57,7 @@ We are given a state-space model represented by the scalar system:
 
 $
   X_t = A X_(t-1) + B + e_(1,t)
-$
+$ <eq:1.1>
 
 Where:
 - $A$ is the scalar state transition coefficient
@@ -83,7 +83,7 @@ This is done using Python and NumPy, with the relevant coding being found in `1.
   caption: [Realisations of the state-space model with $A = 0.9, B = 1, σ_1^2 = 1$ and $X_0 = 5$],
 ) <fig:1.1>
 
-The 5 independent realisations of the state can be seen in @fig:1.1. Note that
+The 5 independent realisations of the state as given by @eq:1.1 can be seen in @fig:1.1. Note that
 we show the state vector $X_t$ as opposed to the observation vector $Y_t$. While the assignment is somewhat ambiguous regarding whether the desired realisations are those of the state vector or the observation vector, we reasonably assume it to be the state vector given that the parameter $σ_2$ which is required to generate the observation vector is not given..
 
 == Realisation of Observation Vector <sec:1.2>
@@ -190,10 +190,10 @@ which yields @fig:1.4.1.
 
 #figure(
   image(
-    "output/1_4_experiment_a_0.9_b_1_sigma_1_1.png",
-    width: 45%
+    "output/1_4_experiment_a_1_b_0.9_sigma_1_1.png",
+    width: 50%
   ),
-  caption: [Parameter estimates for $A, B, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $A = 0.9, B = 1, σ_1^2 = 1$],
+  caption: [Parameter estimates for $A, B, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $A = 1, B = 0.9, σ_1^2 = 1$],
 ) <fig:1.4.1>
 
 We perform another two rounds of these simulations to produce @fig:1.4.2 and @fig:1.4.3, which show the parameter estimates for $A, B, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $A = 0.9, B = 0.9, σ_1^2 = 1$ and $A = 1, B = 0.9, σ_1^2 = 5$, respectively.
@@ -218,7 +218,16 @@ Comparing across the three figures, we find that the Kalman Filter does a fairly
 
 This is particularly true when the noise term is large, as in @fig:1.4.3, where we observe a longer-tailed distribution of the bias term $B$.
 
-We find that for all three rounds and across all three parameters, the Kalman Filter is able to estimate the parameters with a reasonable degree of accuracy, although the bias term $B$ is difficult to estimate accurately.
+We find that for all three rounds and across all three parameters, we are able to estimate the parameters with a reasonable degree of accuracy, though we note that
+the distribution of the estimates is quite large and the true value is only well-approximated when averaging across multiple realisations.
+
+Alternatively, fewer or a single realisation may be used if the number of observations $N$ is sufficiently large.
+
+== Non-Gaussian Noise <sec:1.5>
+
+
+
+
 
 
 #bibliography("report.bib")
