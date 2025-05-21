@@ -291,6 +291,15 @@ maximum likelihood framework as in @sec:1.4, with the results shown in @fig:1.5_
   caption: [Parameter estimates for $a, b, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $a = 0.9, b = 0.9, σ_1^2 = 1$],
 ) <fig:1.5_experiment>
 
+As seen in @fig:1.5_experiment, we find reduced performance of the Kalman Filter for the very heavy-tailed
+cases with $ν ∈ {1, 2}$, though the reduction in parameter estimation performance when compared against the Gaussian process is negligible for cases $ν≥5$. As before, we observe good estimation of the transition coefficient $a$ throughout all cases, but reduced accuracy on the bias term $b$ and process noise $σ_1$, as expected.
+We observe that the estimate of the normal distribution variance, $σ_1^2$ is inflated for the heavy-tailed cases, which is consistent with our earlier discussion and observations of the heavy-tailed nature of the process.
+Additionally, the variance of the estimate of $σ_1^2$ increases as the degrees of freedom $ν$ decreases.
+Lastly, we find that the mean estimate of the bias term $b$ remains accurate, but the uncertainty in this
+estimate increases rapidly as $ν$ decreases.
+
+To aide in our understanding of the predictive performance of the Kalman Filter, we can also inspect the residuals
+of the maximum likelihood estimation, which are shown in @fig:1.5_residuals.
 
 #figure(
   image(
@@ -300,16 +309,28 @@ maximum likelihood framework as in @sec:1.4, with the results shown in @fig:1.5_
     Distribution of the negative log-likelihood residuals from the parameter estimation
     of the processes given by @eq:1.5 with different process noise distributions.
   ]
-)
+) <fig:1.5_residuals>
 
-TODO: Write up
+This confirms our earlier observations, where we see that the mean residual of the maximum likelihood estimation
+increases as the degrees of freedom $ν$ decreases, corresponding to a more heavy-tailed distribution.
+Additionally, we observe a broadening of the distribution of the residuals, which
+additionally would make parameter estimation based on a small number of realisations more challenging.
+This is consistent with the broadening of the underlying distributions as shown in @fig:1.5_distributions.
 
+In conclusion, we find that the Kalman Filter still performs well on non-Gaussian processes, though
+for particularly heavy-tailed processes, the performance impairment may become unacceptable.
+In most real-world scenarios, we would not expect the process noise to be this heavy-tailed,
+which explains why the Kalman Filter finds such widespread use in industry and research.
 
+While it is often reasonable to assume that the observation noise is Gaussian due to the Central Limit Theorem,
+it may not be reasonable to assume the same of the process noise, $e_{1,t}$.
+We have demonstrated, that in most cases non-Gaussian process noise can be handled adequately
+by the Kalman Filter, though we note that the performance may be impaired for particularly heavy-tailed processes.
 
 #pagebreak()
 = Modelling a Transformer Station <sec:2>
 
-In this section, we will be using simple state-space models (SSMs) to gain insights into the temperature of an electrical transformer station. 
+In this section, we will be using simple state-space models (SSMs) to gain insights into the temperature of an electrical transformer station.
 We are given a dataset with 168 observations as dependent variable $Y_t$ and 3 exogenous variables $T_(a \, t), Phi_(s \, t), Phi_(I \, t)$ which describe the outdoor temperature for the transformer in degrees Celsius, the horizontal global solar radiation at the station and the electrical load on the transformer.
 
 == Exploratory Analysis <sec:2_1>
@@ -323,11 +344,11 @@ We are given a dataset with 168 observations as dependent variable $Y_t$ and 3 e
 ) <fig:2.1_exo_y_plot>
 
 In @fig:2.1_exo_y_plot, there is very clearly a seasonality for day/night-cycles in all variables. The solar radiation $Phi_(s \, t)$ drops to $0$ during the night, which the load $Phi_(I \, t)$ mirrors almost exactly. It has a slightly quicker drop, once the sun is setting and during the peaks it
-displays a wiggle, which suggests some sort of load controller or a load maximum with excess being discharged. Lower peaks or crumples in the radiation curve could be explained by cloud cover. A curious thing to notice, is that the load on the transformer $Phi_(I \, t)$ appears to have a quicker attack-time to rise, than the solar radiation $Phi_(s \, t)$. 
+displays a wiggle, which suggests some sort of load controller or a load maximum with excess being discharged. Lower peaks or crumples in the radiation curve could be explained by cloud cover. A curious thing to notice, is that the load on the transformer $Phi_(I \, t)$ appears to have a quicker attack-time to rise, than the solar radiation $Phi_(s \, t)$.
 
 Intuitively, we would expect the solar radiation to lead and load to lag. The $Y_t$ temperature follows $Phi_(s \, t)$ showing some cool-down period, once solar radiation dropped, hence a slower decay in temperature. Outdoor temperature $T_(a \, t)$ not only follows the solar radiation, hence daily 24h seasonality, but also exhibits a longer period seasonality, which could be climate and wheather effects.
 
-Overall, we can actually deduce a lot from just outdoor temperature and solar radiation cycles, especially the uninterrupted (unclouded) ones. When inspecting the graph, we can deduce about 17h of daylight, which excludes locations betwee $approx plus.minus 54$ degrees N/S. 
+Overall, we can actually deduce a lot from just outdoor temperature and solar radiation cycles, especially the uninterrupted (unclouded) ones. When inspecting the graph, we can deduce about 17h of daylight, which excludes locations betwee $approx plus.minus 54$ degrees N/S.
 In the southern-hemisphere there is only \'Tierra de Fuego\' the southern cape of Latin America that is still land-mass, but it does not match the temperature profile (as even in summer, for the long daylight hours, it has max. temperatures of about 8 degrees Celsius). One could possible match the outdoor temperature with weather data to deduce a more
 accurate location.
 
@@ -370,7 +391,7 @@ It was notable, that the variances $sigma_1^2 \, sigma_2^2$ were always pushed t
 
 @fig:2.2_predicted_observations shows that our simple model captures the dynamics of $Y_t$ relatively well. It does not perform well on the first $50$ hours, most likely because the data is more noisy for cloud-cover wheather conditions. Additionally, we can observe that $B_(1,3)$ is the highest coefficient in the @eq:2.2_1d_ssm model and is the factor to exogenous variable $Phi_(I,t)$, the load. As this variable shows the noisiest behaviour for that period, the 'culprit' is clear.
 
-Looking at the residuals (in this case equivalent to the 'innovation') in @fig:2.2_residual_diagnostics, we can observe that they are approximately normally distributed (with small exceptions in the extreme value quantiles in the QQ plot). Hence, we do not diagnose a systematic error with the model. 
+Looking at the residuals (in this case equivalent to the 'innovation') in @fig:2.2_residual_diagnostics, we can observe that they are approximately normally distributed (with small exceptions in the extreme value quantiles in the QQ plot). Hence, we do not diagnose a systematic error with the model.
 
 #figure(
   image(
@@ -416,7 +437,7 @@ $
   B=mat(
     -0.1, 0.1, 0.1;
     0.0, -0.1, 0.0;
-  )\ 
+  )\
   c=mat(
     1.0, 0.2;
   )\
@@ -438,14 +459,14 @@ $
   B=mat(
     -1.7612, 1.741, -1.1408;
     0.9138, -0.4893, 0.8132;
-  )\ 
+  )\
   c=mat(
     0.264, 0.6254;
   )\
   sigma_1^2=0.001 quad sigma_2^2=0.001
 $<eq:2.3_2d_parameter_estimates>
 
-Again, the variances of the noise are pushed to the lower boundary. 
+Again, the variances of the noise are pushed to the lower boundary.
 We did initially to estimate the initial state $X_0$, however, even with constraints in the optimiser, the overall model yielded worse results. Yet the initial value estimates always hovered $approx [20, 20] = X_0$, therefore we deemed it a qualified guess.
 
 #figure(
