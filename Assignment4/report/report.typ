@@ -47,21 +47,21 @@ Authors:
 - Jeppe Klitgaard `<s250250@dtu.dk>`
 - Yunis Wirkus `<s250700@dtu.dk>`
 
-Date: 2025-04-21
+Date: 2025-05-23
 
-#pagebreak()
+// #pagebreak()
 
 = Parameter Estimation in State-Space Model <sec:1>
 
 We are given a state-space model represented by the scalar system:
 
 $
-  X_t = A X_(t-1) + B + e_(1,t)
+  X_t = a X_(t-1) + b + e_(1,t)
 $ <eq:1.1>
 
 Where:
-- $A$ is the scalar state transition coefficient
-- $B$ is a scalar bias term
+- $a$ is the scalar state transition coefficient
+- $b$ is a scalar bias term
 - $e_(1,t) ∼ 𝒩(0, σ_1^2)$ is a Gaussian noise term
 
 The associated observation model is given as:
@@ -72,7 +72,7 @@ $
 Where $e_(2,t) ∼ 𝒩(0, σ_2^2)$ is another Gaussian noise term associated with observations.
 
 == Realisations of State Vector <sec:1.1>
-We are asked to perform 5 independent realisations of the state-space model with parameters $A = 0.9, B = 1, σ_1^2 = 1$ using the initial state $X_0 = 5$. The length of each realisation is $n = 100$.
+We are asked to perform 5 independent realisations of the state-space model with parameters $a = 0.9, b = 1, σ_1^2 = 1$ using the initial state $X_0 = 5$. The length of each realisation is $n = 100$.
 
 This is done using Python and NumPy, with the relevant coding being found in `1.ipynb`.
 
@@ -80,7 +80,7 @@ This is done using Python and NumPy, with the relevant coding being found in `1.
   image(
     "output/1_1_realisations.png",
   ),
-  caption: [Realisations of the state-space model with $A = 0.9, B = 1, σ_1^2 = 1$ and $X_0 = 5$],
+  caption: [Realisations of the state-space model with $a = 0.9, b = 1, σ_1^2 = 1$ and $X_0 = 5$],
 ) <fig:1.1>
 
 The 5 independent realisations of the state as given by @eq:1.1 can be seen in @fig:1.1. Note that
@@ -91,8 +91,8 @@ we show the state vector $X_t$ as opposed to the observation vector $Y_t$. While
 We now generate another realisation, this time also calculating the observation vector $Y_t$, which suffers from additional _observation noise_ $e_(2,t)$. The parameters are the same as before, with the addition of $σ_2^2 = 1$:
 
 $
-X_t &= a X_(t - 1) + b + e_(1,t) &&wider e_(1,t) ~ 𝒩(0, sigma_1^2) \
-Y_t &= X_t + e_(2,t) &&wider e_(2,t) ~ 𝒩(0, sigma_2^2 = 1),
+X_t &= a X_(t - 1) + b + e_(1,t) &&wider e_(1,t) ~ 𝒩(0, σ_1^2) \
+Y_t &= X_t + e_(2,t) &&wider e_(2,t) ~ 𝒩(0, σ_2^2 = 1),
 $ <eq:1.2>
 
 This yields @fig:1.2, in which we can see both the latent state vector $X_t$ and the observation vector $Y_t$, which clearly is affected by the observation noise.
@@ -101,7 +101,7 @@ This yields @fig:1.2, in which we can see both the latent state vector $X_t$ and
   image(
     "output/1_2_realisation.png",
   ),
-  caption: [Realisation of the latent state vector $X_t$ and the associated observation vector $Y_t$ with $A = 0.9, B = 1, σ_1^2 = 1, σ_2^2 = 1$ and $X_0 = 5$],
+  caption: [Realisation of the latent state vector $X_t$ and the associated observation vector $Y_t$ with $a = 0.9, b = 1, σ_1^2 = 1, σ_2^2 = 1$ and $X_0 = 5$],
 ) <fig:1.2>
 
 We note in @fig:1.2 that the observation vector appears to hover around the latent state vector with a symmetric residual, as would be expected from @eq:1.2.
@@ -116,8 +116,8 @@ $
   "State" &&wider hat(X)_(1|0) &= X_"prior" &&wider (10.79)\
   "State Variance" &&wider Σ_(1|0)^(x x) &= P_"prior" &&wider (10.80)\
 
-  "State" &&wider hat(X)_(t+1|t) &= A hat(X)_(t|t) + B &&wider (10.63)\
-  "State Variance" && Var[hat(X)_(t+1|t)] &= Var[tilde(X)_(t+1|t)] = A^2 Var[hat(X)_(t|t)] + sigma_1^2 &&wider (10.54), (10.67)\
+  "State" &&wider hat(X)_(t+1|t) &= a hat(X)_(t|t) + b &&wider (10.63)\
+  "State Variance" && Var[hat(X)_(t+1|t)] &= Var[tilde(X)_(t+1|t)] = a^2 Var[hat(X)_(t|t)] + σ_1^2 &&wider (10.54), (10.67)\
   \
   "Innovation" &&wider hat(Y)_(t+1|t) &= C hat(X)_(t+1|t) &&wider (10.64)\
   "Innovation Variance" &&wider Var[tilde(Y)_(t+1|t)] &= C^2 Var[tilde(X)_(t+1|t)] + R &&wider (10.68)\
@@ -140,7 +140,7 @@ Helpfully, our Kalman Filter implementation already uses the latent state varian
   ),
   caption: [
     Scalar Kalman Filter prediction with 95% confidence intervals.
-    We have again used parameters $A = 0.9, B = 1, σ_1^2 = 1, σ_2^2 = 1, X_0 = 5$ and use the process given in @eq:1.2.
+    We have again used parameters $a = 0.9, b = 1, σ_1^2 = 1, σ_2^2 = 1, X_0 = 5$ and use the process given in @eq:1.2.
     ],
 ) <fig:1.3>
 
@@ -163,7 +163,7 @@ Building on the approach and functions derived in @sec:1.3 and using the templat
 By using the prior and posterior distributions of the state vector, we are able to derive the likelihood distribution as @Madsen_2008[Sec.~10.3.3]:
 $
   L = (tilde(Y)_(t+1|t) |X_(t+1), 𝒴_t))
-  &∼ 𝒩(C(X_(t+1) - A hat(X)_(t|t) - B), σ_2)\
+  &∼ 𝒩(C(X_(t+1) - a hat(X)_(t|t) - b), σ_2)\
   &∼ 𝒩(hat(X)_(t+1|t+1), σ_2)\
   &= 1/(σ_2 sqrt(2π)) exp(- (Y_(t+1) - hat(X)_(t+1|t+1))^2 / σ^2)
 $ <eq:1.4_implicit_Kalman_likelihood>
@@ -190,36 +190,38 @@ which yields @fig:1.4.1.
 
 #figure(
   image(
-    "output/1_4_experiment_a_1_b_0.9_sigma_1_1.png",
+    "output/1_4_experiment_N100_a1_b0.9_σ_11.png",
     width: 50%
   ),
-  caption: [Parameter estimates for $A, B, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $A = 1, B = 0.9, σ_1^2 = 1$],
+  caption: [Parameter estimates for $a, b, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $a = 1, b = 0.9, σ_1^2 = 1$],
 ) <fig:1.4.1>
 
-We perform another two rounds of these simulations to produce @fig:1.4.2 and @fig:1.4.3, which show the parameter estimates for $A, B, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $A = 0.9, B = 0.9, σ_1^2 = 1$ and $A = 1, B = 0.9, σ_1^2 = 5$, respectively.
+We perform another two rounds of these simulations to produce @fig:1.4.2 and @fig:1.4.3, which show the parameter estimates for $a, b, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $a = 0.9, b = 0.9, σ_1^2 = 1$ and $a = 1, b = 0.9, σ_1^2 = 5$, respectively.
 
 #grid(
   columns:2,
   [#figure(
     image(
-      "output/1_4_experiment_a_0.9_b_0.9_sigma_1_1.png",
+      "output/1_4_experiment_N100_a0.9_b0.9_σ_11.png",
     ),
-    caption: [Parameter estimates for $A, B, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $A = 0.9, B = 0.9, σ_1^2 = 1$],
+    caption: [Parameter estimates for $a, b, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $a = 0.9, b = 0.9, σ_1^2 = 1$],
   ) <fig:1.4.2>],
   [#figure(
     image(
-      "output/1_4_experiment_a_1_b_0.9_sigma_1_5.png",
+      "output/1_4_experiment_N100_a1_b0.9_σ_15.png",
     ),
-    caption: [Parameter estimates for $A, B, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $A = 1, B = 0.9, σ_1^2 = 5$],
+    caption: [Parameter estimates for $a, b, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $a = 1, b = 0.9, σ_1^2 = 5$],
   ) <fig:1.4.3>]
 )
 
-Comparing across the three figures, we find that the Kalman Filter does a fairly good job of estimating the parameters, although a large variance in the estimate of the bias term $B$ is observed. We can understand this intuitively, as the observable effect of the bias term, which simply shifts the state vector and thus the observation vector, is difficult to distinguish from a shift arising from the _random walk_ arising from the integration of the noise term $e_(1,t)$.
+Note that $a=0.9$ was used for @fig:1.4.2 as opposed to the $a=5$ given in the assignment, which was reportedly a typo, as announced on the EdStem Forum by Justinas.
 
-This is particularly true when the noise term is large, as in @fig:1.4.3, where we observe a longer-tailed distribution of the bias term $B$.
+Comparing across the three figures, we find that the Kalman Filter does a fairly good job of estimating the parameters, although a large variance in the estimate of the bias term $b$ is observed. We can understand this intuitively, as the observable effect of the bias term, which simply shifts the state vector and thus the observation vector, is difficult to distinguish from a shift arising from the _random walk_ arising from the integration of the noise term $e_(1,t)$.
+
+This is particularly true when the noise term is large, as in @fig:1.4.3, where we observe a wider distribution of the bias term $b$.
 
 We find that for all three rounds and across all three parameters, we are able to estimate the parameters with a reasonable degree of accuracy, though we note that
-the distribution of the estimates is quite large and the true value is only well-approximated when averaging across multiple realisations.
+the distribution of the estimates is quite large and the true value is only well-approximated when averaging across multiple realisations. We find that $a$ is the easiest parameter to estimate, while $b$ is the most difficult, as discussed above.
 
 Alternatively, fewer or a single realisation may be used if the number of observations $N$ is sufficiently large.
 
@@ -268,8 +270,40 @@ described by @eq:1.5 by simulating realisations of the process with varying degr
   image(
     "output/1_5_observations.png",
   ),
-  caption: [Observations $Y_t$ of the processes given by @eq:1.5 with t-distributed process noise. Parameters are $A = 0.9, B = 1, σ_1^2 = 1, σ_2^2 = 1$ and $X_0 = 5$],
+  caption: [Observations $Y_t$ of the processes given by @eq:1.5 with t-distributed process noise. Parameters are $a = 0.9, b = 1, σ_1^2 = 1, σ_2^2 = 1$ and $X_0 = 5$],
 ) <fig:1.5_observations>
+
+The heavy-tailed nature of the t-distribution is clearly visible in @fig:1.5_observations, where we see large, sudden jumps in the observations $Y_t$.
+This is particularly pronounced for $ν=1$, where the process is very heavy-tailed and the observations are erratic.
+
+=== Parameter Estimation on Non-Gaussian Processes <sec:1.5.1>
+
+We now perform the same parameter estimation as in @sec:1.4, but using the non-Gaussian process given by @eq:1.5 with $ν=∈{1, 2, 5, 100}$ and remaining parameters $a = 0.9, b = 1, σ_1^2 = 1$. We additionally perform the estimation using the Gaussian process $𝒩(0, σ_1^2)$ for comparison.
+We simulate a total of $N=100$ realisations of each process, with each realisation consisting of $n=100$ observations.
+
+The unmodified Kalman Filter is used to estimate the parameters through the
+maximum likelihood framework as in @sec:1.4, with the results shown in @fig:1.5_experiment.
+
+#figure(
+  image(
+    "output/1_5_experiment.png",
+  ),
+  caption: [Parameter estimates for $a, b, σ_1^2$ using the Kalman Filter and maximum likelihood estimation with $a = 0.9, b = 0.9, σ_1^2 = 1$],
+) <fig:1.5_experiment>
+
+
+#figure(
+  image(
+    "output/1_5_residuals.png",
+  ),
+  caption: [
+    Distribution of the negative log-likelihood residuals from the parameter estimation
+    of the processes given by @eq:1.5 with different process noise distributions.
+  ]
+)
+
+TODO: Write up
+
 
 
 #pagebreak()
