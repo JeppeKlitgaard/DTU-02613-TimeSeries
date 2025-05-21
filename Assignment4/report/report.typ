@@ -349,8 +349,9 @@ displays a wiggle, which suggests some sort of load controller or a load maximum
 
 Intuitively, we would expect the solar radiation to lead and load to lag. The $Y_t$ temperature follows $Phi_(s \, t)$ showing some cool-down period, once solar radiation dropped, hence a slower decay in temperature. Outdoor temperature $T_(a \, t)$ not only follows the solar radiation, hence daily 24h seasonality, but also exhibits a longer period seasonality, which could be climate and wheather effects.
 
+Physically, we can actually deduce a lot from just outdoor temperature and solar radiation cycles, especially the uninterrupted (unclouded) ones. When inspecting the graph, we can deduce about 17h of daylight, which excludes locations betwee $approx plus.minus 54$ degrees N/S.
+
 /*
-Overall, we can actually deduce a lot from just outdoor temperature and solar radiation cycles, especially the uninterrupted (unclouded) ones. When inspecting the graph, we can deduce about 17h of daylight, which excludes locations betwee $approx plus.minus 54$ degrees N/S.
 In the southern-hemisphere there is only \'Tierra de Fuego\' the southern cape of Latin America that is still land-mass, but it does not match the temperature profile (as even in summer, for the long daylight hours, it has max. temperatures of about 8 degrees Celsius). One could possible match the outdoor temperature with weather data to deduce a more
 accurate location.
 */
@@ -413,8 +414,11 @@ Beyond, we report the AIC and BIC as model selection criteria with $text("AIC")=
 
 The physical implications and interpretations are extensively discussed in @sec:2_4_2d_state_interpretation for a 2D SSM. As the line of argument is analogous here for the 1D case, we will only briefly discuss the parameters.
 
-The coefficient matrix $B$ can be seen as the weights for a sum-composition of $u_t$. Consequently, we can interpret the magnitude of the coefficients as importance weight. Apparently the last value of $B$ is the largest (@eq:2.2_parameter_estimates), which corresponds to $Phi_(t,I)$ being weighted as the most important predictor. Via the second coefficient in $B$, the importance of $Phi_(t,s)$ is weighted the lowest. Most likely, because from @fig:2.4_correlation_heatmap we can see that those two $Phi_t$ have a high correlation and thus share a lot of informational value for the model. Since one of these is already weighted high, there is no need to weigh the other one highly as well.
+The coefficient matrix $B$ can be seen as the weights for a sum-composition of $u_t$. Consequently, we can interpret the magnitude of the coefficients as importance weight. Apparently the last value of $B_(1,3)$ is the largest (@eq:2.2_parameter_estimates), which corresponds to $Phi_(t,I)$ being weighted as the most important predictor. Via the second coefficient $B_(1,2)$, the importance of $Phi_(t,s)$ is weighted the lowest. Most likely, because from @fig:2.4_correlation_heatmap we can see that those two $Phi_t$ have a high correlation and thus share a lot of informational value for the model. Since one of these is already weighted high, there is no need to weigh the other one highly as well.
 $T_(t,a)$ outdoor temperature is given about half as much importance as $Phi_(t,I)$ load.
+
+In sum, we can interpret the physical implications as follows: The transformer load is the most significant contributor to the hidden-state $X_t$, but also introduces most of the noise to the system (as becomes visually clear in @fig:2.1_exo_y_plot). It is also leading the transformer temperature $Y_t$. The outdoor temperature is the second most significant contributor, as of course the environment also impacts the heating and cooling of the transformer unit.
+Simple the range of values of $Y_t, Phi_(t,I), T_(t,a)$ is somewhat similar, while $Phi_(t,s)$ is not. Hence, it can be more directly modeled through a linear combination. Normalizing the data before fitting could have potentially mitigated this effect.
 
 
 == 2D state-space model <sec:2_3_2D_SSM>
@@ -579,8 +583,9 @@ Having analysed two simpler SSMs, we can give an outlook on what to improve. As 
 
 One option is to employ Kalman-smootheners, which could help tackle the large prediction error in especially the first 50h of the expirement.
 
-Another option would be to include an auto-regressive term in the observation equation of the model. This could assist in better performance around the peaks, as the hidden-states seem to pre-maturely drop after peeks, in some occasions.
+Another option would be to include an auto-regressive term in the observation equation of the model ($Y_t = phi.alt_1 Y_(t-1) + ... + phi.alt_p Y_(t-p) + C X_t + e_(t,2)$). This could assist in better performance around the ascends and descends, as the hidden-states seem to pre-maturely drop after peeks, in some occasions.
+Further, as we noted in the ACF plots of @fig:2.2_residual_diagnostics and @fig:2.3_residual_diagnostics_2d, there were some significant auto-regressive terms for the residuals. Adding such components directly to the model, could help mitigate this systematic part of the error and improve normality of the residuals.
 
-Furthermore, it could be beneficial to include another parameter-exogenous-term ($Y_t = C X_t + D u_t + e$) in the observation equation. As we saw in @fig:2.1_exo_y_plot, the two exogenous variables $Phi_(s,t), Phi_(I,t)$ seemed to be leading in dynamics and seasonality. Re-enforcing the exogenous $u_t$ onto the observation part, could help capture that behaviour better.
+Furthermore, it could be beneficial to include another parameter-exogenous-term ($Y_t = C X_t + D u_t + e$) in the observation equation. As we saw in @fig:2.1_exo_y_plot, the two exogenous variables $Phi_(s,t), Phi_(I,t)$ seemed to be leading in dynamics and seasonality. Re-enforcing the exogenous $u_t$ onto the observation part, could help capture behaviour around peaks better.
 
 #bibliography("report.bib")
