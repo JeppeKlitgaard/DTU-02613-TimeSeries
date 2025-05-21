@@ -471,11 +471,94 @@ This is confirmed in the ACF, as $rho$ is not alternating as strongly as in the 
 ) <fig:2.3_residual_diagnostics_2d>
 
 The lack of performance difference between the 1D hidden-state model and the 2D hidden-state model, may suggest, that there is either no significant value addition in a 2nd hidden-state, hence, $X_(t,0)$ and $X_(t,1)$ would strongly correlate. There could also be a notion of inverse or counter-acting relationship between the two hidden-states, that nulls out or corrects any information gain of the additional second state compared to only one state.
-We delve deeper in the next section...
+We explore this further in the next section.
 
 
 == 2D state interpretation & discussion <sec:2_4_2d_state_interpretation>
 
+The goal of this section is to inspect the estimated hidden-states of the 2D model @eq:2.3_2d_ssm and discuss insights, that can be derived from the coefficients $A, B, C, sigma_1, sigma_2$ or the state time-series $bold(X_t)$ themselves.
 
+#figure(
+  image(
+    "output/2_4_hidden_states_exo.png",
+  ),
+  caption: [estimated hidden state $X_(t,0)$ (because visually closer to exog.) and exogenous variables $u_t$; standardized for better comparison],
+) <fig:2.4_hidden_states_exo>
+
+We start with a visual analysis of the hidden states $bold(X_t)$ in @fig:2.4_hidden_states_exo. We can see that both states are seasonally counter-acting, as assumed in @sec:2_3_2D_SSM. In fact, the Pearson correlation coefficient between $X_(t,0), X_(t,1)$ is $-0.9961$, so almost perfect negative correlation. Thus confirms the assumption, that there is not much value added by a second hidden state.
+By construction, the hidden states are leading the observations in signal response (in upper graph). The value ranges for $X_t$ are not quite insightful, as they can easily be absorbed by the magnitude of coefficients in $A$. Yet, the opposing nature suggests that one state is 'buffering' the other.
+In the bottom graph of @fig:2.4_hidden_states_exo, we only plot one state, as already deduced that there is not much additional informational value in the second state. 
+Overall, we know that, in principle, the hidden state is just a weighted sum (because it is a linear combination) of the exogenous variables. We can see that $X_(t,0)$ is most closely followed by $Phi_(t,s)$ (which can be seen in @fig:2.4_correlation_heatmap), which suggests the highest weight/coefficient assigned. 
+The heatmap @fig:2.4_correlation_heatmap also shows, that even the exogenous variables in $u_t$ have high statistical correlation among themselves. This further supports the conclusion, that estimated parameters will favour one variable, as the others do not add much information to the model.
+
+#figure(
+  image(
+    "output/2_4_correlation_heatmap.png",
+  ),
+  caption: [correlation coefficient heatmap],
+) <fig:2.4_correlation_heatmap>
+
+We follow with an analysis of the estimated coefficients: As mentioned above, we can interpret the coefficients in $B$ as weights for the sum-composition of $u_t$ for each state. The sign between the first and second row of $B$ are flipped (c.f. @eq:2.3_2d_parameter_estimates), explaining the opposing behaviour and the 'buffering/dampening' nature. We can see in the top graph of @fig:2.4_stepwise_coeff_states, that this weighted sum is somewhere in between the total sum and the average of all exogenous variables in $u_t$ combined. 
+The highest weights are both in column 1 of $B$, the weights for $T_(t,a)$. This is likely due to the extremely different magnitude of the exogenous variables, where $T_(t,a)$ has the smalles values, so it needs to be boosted to even compete with the other exogenous variables in the weighted sum. Additionally, $T_(t,a)$ has the lowest correlation (c.f. @fig:2.4_correlation_heatmap) with any of the other exogenous variables (or states), so it provides the most uncovered information.
+
+$A$ acts as the recursive state factor, also allowing for further dampening of the high magnitude of the states $bold(X)_t$. This matrix parameter is responsible for convergence and stability of the entire SSM (c.f. @sec:2.4_1_stability).
+The parameter matrix $C$ is the factor that combines both states into a prediction for the observation $Y_t$. It is therefore import, as it controlls the mixing of states. 
+
+Interestingly, because of the high correlations of variables in the entire SSM, in the bottom plot of @fig:2.4_stepwise_coeff_states, we can observe that skipping the recursive estimation of a hidden-state entirely (by modelling $C (B u_t)$), we still get a decent approximation of our observations $Y_t$. This would suggest and confirm our previous assumptions, that $Y_t$ could possible be predicted directly by a linear model of only $u_t$.
+
+To better illustrate the effects of the parameters, we visualise some time-series with the estimated states $bold(X_t)$ and exogenous variables $u_t$ multiplied by the parameters sequentially.
+
+#figure(
+  image(
+    "output/2_4_stepwise_coeff_states.png",
+  ),
+  caption: [sequential application of estimated parameters to the states $bold(X)_t$],
+) <fig:2.4_stepwise_coeff_states>
+
+The interpretation of @fig:2.4_stepwise_coeff_states is mostly conducted above. A not yet mentioned interesting insight is that the combination of $A bold(X)_t$ switches sign in the middle of the time axis. This coincides with the slight trend notices in the residuals in @fig:2.2_residual_diagnostics. So after all, it might be that improving the estimates of $A$ could avoid the over- and under-shooting trend.
+
+-----
+Reflect on the interpretability of the two latent states. Can you guess what each state might
+represent physically?
+• Hint: Consider whether one state could act as a “buffer” for temperature dynamics
+Propose a physical interpretation for each state.
+• Hint: Could one state represent the core transformer temperature and the other a cooling
+or buffer effect?
+• Discuss how the inputs affect each state according to the estimated parameters.
+• Reflect on whether the model structure makes physical sense based on your plots and the
+parameter signs/magnitudes.
+
+A physical interpretation of the states is, as mentioned, a combination of the external factors at the measurment station, $u_t$ as predictor, mostly (c.f. @fig:2.4_correlation_heatmap) $Phi_(s,t)$.
+
+One could interpret one state $X_(t,1)$ as a buffer for $X_(t,0)$ (c.f. @fig:2.4_hidden_states_exo). Based on the above conclusions, mainly buffering/adjusting $X_(t,0)$ for the outdoor temperature $T_(t,a)$. Alas, within that line of argument, one state would represent a "cooling" and the other a "solar-radiation-load-temperature" response.
+
+Yet, as already argued, this would not be necessariy as one single state carries almost just as information, hence this buffering effect for $T_(t,a)$ is most likely absorbed into $A$ (not into the noise, as the noise terms both $e_(t,1), e_(t,2) arrow.r 0$ during the MLE).
+
+Overall, the physical interpretation of the model makes sense. Nevertheless, it also became clear that the model is too complex for the informational value it contains/processes.
+
+
+=== Stability <sec:2.4_1_stability>
+
+While not asked for, this section seems important after we encountered instability in the first version of the assignment in part 1.
+Very briefly: For stability of an SSM we focus only on the homogenous part of the system, namely:
+
+$
+  X_(t+1) = A X_t + ...\
+  Y_t = C X_t + ...
+$
+
+Assuming the exogenous part $u_t$ is in itself is bounded and stable, it does not affect the stability of the system, it only gives a 'direction' of movement. We also assume the variance of the state equation $sigma_1^2$ to be reasonably bounded.
+More specifically, within the homogenous part of the system, we look at matrix $A$. If the spectrum of $A$ is contractive, in other words, if $forall lambda_i in bold(lambda)(A): |lambda_i|<1$, then the SSM is assumed to be asymptotically stable (for full details, see @Anderson_1979 chapter 4)
+
+
+=== Outlook <sec:2.4_2_outlook>
+
+Having analysed two simpler SSMs, we can give an outlook on what to improve. As we have seen in this example, increasing the number of states does not significantly improve the performance of the model. Thus, we must think of other routes to improve performance.
+
+One option is to employ Kalman-smootheners, which could help tackle the large prediction error in especially the first 50h of the expirement.
+
+Another option would be to include an auto-regressive term in the observation equation of the model. This could assist in better performance around the peaks, as the hidden-states seem to pre-maturely drop after peeks, in some occasions.
+
+Furthermore, it could be beneficial to include another parameter-exogenous-term ($Y_t = C X_t + D u_t + e$) in the observation equation. As we saw in @fig:2.1_exo_y_plot, the two exogenous variables $Phi_(s,t), Phi_(I,t)$ seemed to be leading in dynamics and seasonality. Re-enforcing the exogenous $u_t$ onto the observation part, could help capture that behaviour better.
 
 #bibliography("report.bib")
