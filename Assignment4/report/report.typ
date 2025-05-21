@@ -365,7 +365,7 @@ $
   Y_t = c X_t + e_(2,t)
 $<eq:2.2_1d_ssm>
 
-with 
+with
 $
   u_t = [T_(a \, t) \, Phi_(s \, t) \, Phi_(I \, t)]^tack.b in bb(R)^(1 times 3); quad
   a in bb(R) \, B in bb(R)^(1 times 3) \, c in bb(R); quad
@@ -376,7 +376,7 @@ $
 For the fitting, the following contraints were set: The inital value for the hidden-state value was chosen at $X_0 = 20$ and $Sigma_(t+1 | t)^(x x)=1.0$, the parameters were initialized as $a=0.8 \, B=[0.05, 0.1, 0.1]^T \, c=1, sigma_1^2=log(2), sigma_2^2=log(2)$.
 All entries of $a, B, c$ were constrained in the interval $[-2,2]$, while $sigma_1^2 \, sigma_2^2$, the variances of $e_(1 \, t) \, e_(2 \, t)$ were constrained in $[1e-3, log(10)]$.
 
-These values were chosen somewhat arbitrarily (based on what worked well) within the boundry of the hints given in the exercise.
+These values were chosen somewhat arbitrarily (based on what worked well) within the boundary of the hints given in the exercise.
 
 We fitted the model analogously to the framework introduced in @eq:1.3_Kalman_filter and @eq:1.4_implicit_Kalman_likelihood (for which the code can be found in the attached `2.ipynb` file). The Kalman-Filter provided predictions for the hidden-state, which where the basis for our negative log-likelihood to minimize.
 The resulting estimated parameters rounded to the 4th decimal digit are:
@@ -385,7 +385,7 @@ $
   a = 0.7906; quad B=[0.1313 \, 0.0031 \, 0.2524]^T; quad c=0.8863; quad sigma_1 = 1e-3; quad sigma_2 = 1e-3
 $ <eq:2.2_parameter_estimates>
 
-It was notable, that the variances $sigma_1^2 \, sigma_2^2$ were always pushed to the lower boundary of the given contraint, no matter the initialization. This could imply, that the model can explain the observations $Y_t$ very well without added noise, or that the noise in the system is not of additive nature.
+It was notable, that the variances $sigma_1^2 \, sigma_2^2$ were always pushed to the lower boundary of the given constraint, no matter the initialization. This could imply, that the model can explain the observations $Y_t$ very well without added noise, or that the noise in the system is not of additive nature.
 
 #figure(
   image(
@@ -396,7 +396,11 @@ It was notable, that the variances $sigma_1^2 \, sigma_2^2$ were always pushed t
 
 @fig:2.2_predicted_observations shows that our simple model captures the dynamics of $Y_t$ relatively well. It does not perform well on the first $50$ hours, most likely because the data is more noisy for cloud-cover wheather conditions. Additionally, we can observe that $B_(1,3)$ is the highest coefficient in the @eq:2.2_1d_ssm model and is the factor to exogenous variable $Phi_(I,t)$, the load. As this variable shows the noisiest behaviour for that period, the 'culprit' is clear.
 
-Looking at the residuals (in this case equivalent to the 'innovation') in @fig:2.2_residual_diagnostics, we can observe that they are approximately normally distributed (with small exceptions in the extreme value quantiles in the QQ plot). Hence, we do not diagnose a systematic error with the model.
+Looking at the residuals (in this case equivalent to the 'innovation') in @fig:2.2_residual_diagnostics, we can observe that they are not fully normally distributed,
+which is also evident in the autocorrelation plots, where we see some statistically significant peaks at low lags, indicating some short-term correlation.
+Given that there are no significant correlations at higher lags, we conclude that the model
+does a good job of capturing the dynamics of the system, with only very modest systematic errors associated with
+the larger loads during peak hours.
 
 #figure(
   image(
@@ -409,7 +413,7 @@ Beyond, we report the AIC and BIC as model selection criteria with $text("AIC")=
 
 The physical implications and interpretations are extensively discussed in @sec:2_4_2d_state_interpretation for a 2D SSM. As the line of argument is analogous here for the 1D case, we will only briefly discuss the parameters.
 
-The coefficient matrix $B$ can be seen as the weights for a sum-composition of $u_t$. Consequently, we can interpret the magnitude of the coefficients as importance weight. Apparently the last value of $B$ is the largest (@eq:2.2_parameter_estimates), which corresponds to $Phi_(t,I)$ being weighted as the most important predictor. Via the second coefficientin $B$, the importance of $Phi_(t,s)$ is weighted the lowest. Most likely, because from @fig:2.4_correlation_heatmap we can see that those two $Phi_t$ have a high correlation and thus share a lot of informational value for the model. Since one of these is already weighted high, there is no need to weigh the other one highly as well.
+The coefficient matrix $B$ can be seen as the weights for a sum-composition of $u_t$. Consequently, we can interpret the magnitude of the coefficients as importance weight. Apparently the last value of $B$ is the largest (@eq:2.2_parameter_estimates), which corresponds to $Phi_(t,I)$ being weighted as the most important predictor. Via the second coefficient in $B$, the importance of $Phi_(t,s)$ is weighted the lowest. Most likely, because from @fig:2.4_correlation_heatmap we can see that those two $Phi_t$ have a high correlation and thus share a lot of informational value for the model. Since one of these is already weighted high, there is no need to weigh the other one highly as well.
 $T_(t,a)$ outdoor temperature is given about half as much importance as $Phi_(t,I)$ load.
 
 
@@ -426,7 +430,7 @@ with
 $
   u_t = [T_(a \, t) \, Phi_(s \, t) \, Phi_(I \, t)]^tack.b in bb(R)^(1 times 3); quad
   A in bb(R)^(2 times 2) \, B in bb(R)^(2 times 3) \, C in bb(R)^(1 times 2); quad
-  e_(1 \, t) in bb(R)^(2 times 1) \, e_(2 \, t) in bb(R); quad 
+  e_(1 \, t) in bb(R)^(2 times 1) \, e_(2 \, t) in bb(R); quad
   bold(X)_t in bb(R)^(2 times 1)
 $
 both noise terms $e_t$ following (multivariate-)normal distributions with mean $0$.
@@ -485,9 +489,7 @@ In @fig:2.3_os_pred_2d_vs_1d we first look at the one-step predictions and compa
 
 We report the information criteria statistics as $text("AIC")=499.23 \, text("BIC")=542.97$, which indicates that the 2D model does not perform significantly better. Because it is still the case, that AIC penalizes model complexity more heavily here (with $p=14$), we can even argue that the 2D model performs slightly worse than the 1D model, compared with its complexity.
 
-Thus, we turn to the residual analysis in @fig:2.3_residual_diagnostics_2d. This follows the above assumptions, that the model does not perform significantly worse or better. We still cannot diagnose a systematic error of the 2D SSM, as the residuals appear approximately normally distributed.
-Despite, one thing to note is that from the top plot we can see a weak trend, that the model tends to change from under-shooting to over-shooting the true $Y_t$.
-This is confirmed in the ACF, as $rho$ is not alternating as strongly as in the 1D model. The PACF suggests that there is not enough information to diagnose a systematic trend in residuals (yet).
+Thus, we turn to the residual analysis in @fig:2.3_residual_diagnostics_2d, in which we again observe some local systematic errors, in which the model systematically under- or overestimates the observations during peak hours. We find that the residuals are normally distributed at larger timescales the model performs well overall.
 
 #figure(
   image(
@@ -513,8 +515,8 @@ The goal of this section is to inspect the estimated hidden-states of the 2D mod
 
 We start with a visual analysis of the hidden states $bold(X_t)$ in @fig:2.4_hidden_states_exo. We can see that both states are seasonally counter-acting, as assumed in @sec:2_3_2D_SSM. In fact, the Pearson correlation coefficient between $X_(t,0), X_(t,1)$ is $-0.9961$, so almost perfect negative correlation. Thus confirms the assumption, that there is not much value added by a second hidden state.
 By construction, the hidden states are leading the observations in signal response (in upper graph). The value ranges for $X_t$ are not quite insightful, as they can easily be absorbed by the magnitude of coefficients in $A$. Yet, the opposing nature suggests that one state is 'buffering' the other.
-In the bottom graph of @fig:2.4_hidden_states_exo, we only plot one state, as already deduced that there is not much additional informational value in the second state. 
-Overall, we know that, in principle, the hidden state is just a weighted sum (because it is a linear combination) of the exogenous variables. We can see that $X_(t,0)$ is most closely followed by $Phi_(t,s)$ (which can be seen in @fig:2.4_correlation_heatmap), which suggests the highest weight/coefficient assigned. 
+In the bottom graph of @fig:2.4_hidden_states_exo, we only plot one state, as already deduced that there is not much additional informational value in the second state.
+Overall, we know that, in principle, the hidden state is just a weighted sum (because it is a linear combination) of the exogenous variables. We can see that $X_(t,0)$ is most closely followed by $Phi_(t,s)$ (which can be seen in @fig:2.4_correlation_heatmap), which suggests the highest weight/coefficient assigned.
 
 #let fig = [#figure(
   image(
@@ -527,13 +529,13 @@ Overall, we know that, in principle, the hidden state is just a weighted sum (be
 #wrap-content(fig, [
   The heatmap @fig:2.4_correlation_heatmap also shows, that even the exogenous variables in $u_t$ have high statistical correlation among themselves. This further supports the conclusion, that estimated parameters will favour one variable, as the others do not add much information to the model.
 
-  We follow with an analysis of the estimated coefficients: As mentioned above, we can interpret the coefficients in $B$ as weights for the sum-composition of $u_t$ for each state. The sign between the first and second row of $B$ are flipped (c.f. @eq:2.3_2d_parameter_estimates), explaining the opposing behaviour and the 'buffering/dampening' nature. We can see in the top graph of @fig:2.4_stepwise_coeff_states, that this weighted sum is somewhere in between the total sum and the average of all exogenous variables in $u_t$ combined. 
+  We follow with an analysis of the estimated coefficients: As mentioned above, we can interpret the coefficients in $B$ as weights for the sum-composition of $u_t$ for each state. The sign between the first and second row of $B$ are flipped (c.f. @eq:2.3_2d_parameter_estimates), explaining the opposing behaviour and the 'buffering/dampening' nature. We can see in the top graph of @fig:2.4_stepwise_coeff_states, that this weighted sum is somewhere in between the total sum and the average of all exogenous variables in $u_t$ combined.
 ])
-  
+
 The highest weights are both in column 1 of $B$, the weights for $T_(t,a)$. This is likely due to the extremely different magnitude of the exogenous variables, where $T_(t,a)$ has the smalles values, so it needs to be boosted to even compete with the other exogenous variables in the weighted sum. Additionally, $T_(t,a)$ has the lowest correlation (c.f. @fig:2.4_correlation_heatmap) with any of the other exogenous variables (or states), so it provides the most uncovered information.
 
 $A$ acts as the recursive state factor, also allowing for further dampening of the high magnitude of the states $bold(X)_t$. This matrix parameter is responsible for convergence and stability of the entire SSM (c.f. @sec:2.4_1_stability).
-The parameter matrix $C$ is the factor that combines both states into a prediction for the observation $Y_t$. It is therefore import, as it controlls the mixing of states. 
+The parameter matrix $C$ is the factor that combines both states into a prediction for the observation $Y_t$. It is therefore import, as it controlls the mixing of states.
 
 Interestingly, because of the high correlations of variables in the entire SSM, in the bottom plot of @fig:2.4_stepwise_coeff_states, we can observe that skipping the recursive estimation of a hidden-state entirely (by modelling $C (B u_t)$), we still get a decent approximation of our observations $Y_t$. This would suggest and confirm our previous assumptions, that $Y_t$ could possible be predicted directly by a linear model of only $u_t$.
 
@@ -552,7 +554,7 @@ A physical interpretation of the states is, as mentioned, a combination of the e
 
 One could interpret one state $X_(t,1)$ as a buffer for $X_(t,0)$ (c.f. @fig:2.4_hidden_states_exo). Based on the above conclusions, mainly buffering/adjusting $X_(t,0)$ for the outdoor temperature $T_(t,a)$. Alas, within that line of argument, one state would represent a "cooling" and the other a "solar-radiation-load-temperature" response.
 
-Yet, as already argued, this would not be necessariy as one single state carries almost just as information, hence this buffering effect for $T_(t,a)$ is most likely absorbed into $A$ (not into the noise, as the noise terms both $e_(t,1), e_(t,2) arrow.r 0$ during the MLE).
+Yet, as already argued, this would not be necessary as one single state carries almost just as much information, hence this buffering effect for $T_(t,a)$ is most likely absorbed into $A$ (not into the noise, as the noise terms both $e_(t,1), e_(t,2) arrow.r 0$ during the MLE).
 
 Overall, the physical interpretation of the model makes sense. Nevertheless, it also became clear that the model is too complex for the informational value it contains/processes.
 
