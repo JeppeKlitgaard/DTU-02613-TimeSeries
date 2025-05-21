@@ -402,12 +402,10 @@ Looking at the residuals (in this case equivalent to the 'innovation') in @fig:2
 
 Beyond, we report the AIC and BIC as model selection criteria with $text("AIC")=495.15, text("BIC")=517.02$. In this setting, the BIC 'advantage' of penalizing model complexity heavier than AIC has not kicked-in yet, since with $p=7, n=168 arrow.r.double 2p > log(n)p$.
 
-FILL IN
-– Are there periods where the model performs poorly (e.g., daytime peaks)?
-– What do the estimated parameters tell you about the influence of load, solar radiation,
-and outdoor temperature?
-• Hint: Consider the physical meaning of the parameters (e.g., effect of load on temperature
-rise).
+The physical implications and interpretations are extensively discussed in @sec:2_4_2d_state_interpretation for a 2D SSM. As the line of argument is analogous here for the 1D case, we will only briefly discuss the parameters.
+
+The coefficient matrix $B$ can be seen as the weights for a sum-composition of $u_t$. Consequently, we can interpret the magnitude of the coefficients as importance weight. Apparently the last value of $B$ is the largest (@eq:2.2_parameter_estimates), which corresponds to $Phi_(t,I)$ being weighted as the most important predictor. Via the second coefficientin $B$, the importance of $Phi_(t,s)$ is weighted the lowest. Most likely, because from @fig:2.4_correlation_heatmap we can see that those two $Phi_t$ have a high correlation and thus share a lot of informational value for the model. Since one of these is already weighted high, there is no need to weigh the other one highly as well.
+$T_(t,a)$ outdoor temperature is given about half as much importance as $Phi_(t,I)$ load.
 
 
 == 2D state-space model <sec:2_3_2D_SSM>
@@ -537,17 +535,6 @@ To better illustrate the effects of the parameters, we visualise some time-serie
 ) <fig:2.4_stepwise_coeff_states>
 
 The interpretation of @fig:2.4_stepwise_coeff_states is mostly conducted above. A not yet mentioned interesting insight is that the combination of $A bold(X)_t$ switches sign in the middle of the time axis. This coincides with the slight trend notices in the residuals in @fig:2.2_residual_diagnostics. So after all, it might be that improving the estimates of $A$ could avoid the over- and under-shooting trend.
-
------
-Reflect on the interpretability of the two latent states. Can you guess what each state might
-represent physically?
-• Hint: Consider whether one state could act as a “buffer” for temperature dynamics
-Propose a physical interpretation for each state.
-• Hint: Could one state represent the core transformer temperature and the other a cooling
-or buffer effect?
-• Discuss how the inputs affect each state according to the estimated parameters.
-• Reflect on whether the model structure makes physical sense based on your plots and the
-parameter signs/magnitudes.
 
 A physical interpretation of the states is, as mentioned, a combination of the external factors at the measurment station, $u_t$ as predictor, mostly (c.f. @fig:2.4_correlation_heatmap) $Phi_(s,t)$.
 
