@@ -12,7 +12,7 @@ D = np.zeros((1,p))
 Q = np.eye(m)*0.8
 R = np.eye(1)*0.2
 
-def simulate_ssm(A:np.ndarray=A, B:np.ndarray=B, C:np.ndarray=C, D:np.ndarray=D, Q:np.ndarray=Q, R:np.ndarray=R, u:np.ndarray=u, x0=None, seed:int=42):
+def simulate_ssm(A:np.ndarray=A, B:np.ndarray=B, C:np.ndarray=C, D:np.ndarray=D, Q:np.ndarray=Q, R:np.ndarray=R, u:np.ndarray=u, x0:np.ndarray=np.array([20.0, 20.0]), seed:int=42):
     """
     Simulate a linear Gaussian state-space model.
     
@@ -34,17 +34,15 @@ def simulate_ssm(A:np.ndarray=A, B:np.ndarray=B, C:np.ndarray=C, D:np.ndarray=D,
     
     x = np.zeros((T+1, n))
     y = np.zeros((T, m))
-    x[0] = np.ones(n)
-    if x0 is not None:
-        x[0] = x0
+    x[0] = x0
 
     for t in range(T):
         w_t = rng.multivariate_normal(np.zeros(n), Q)
         v_t = rng.multivariate_normal(np.zeros(m), R)
-        x[t+1] = A @ x[t] + B @ u[t] + w_t
-        y[t] = C @ x[t+1] + D @ u[t] + v_t
+        x[t] = A @ x[t-1] + B @ u[t] + w_t
+        y[t] = C @ x[t] + D @ u[t] + v_t
 
-    return y, x
+    return y, x[1:]
 
 def predict_ssm(A, B, C, D, Q, R, u_future, xT, PT, seed=None, return_samples=False):
     """

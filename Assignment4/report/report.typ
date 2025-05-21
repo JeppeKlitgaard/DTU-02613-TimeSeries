@@ -388,4 +388,94 @@ and outdoor temperature?
 • Hint: Consider the physical meaning of the parameters (e.g., effect of load on temperature
 rise).
 
+
+== 2D state-space model <sec:2_3_2D_SSM>
+
+The goal here is to fit (estimate the parameters) of the following extended 2D (meaning 2 hidden states) model via the Kalman-Filter and MLE:
+
+$
+  X_(t+1) = A X_t + B u_t + e_(1,t) \
+  Y_t = C X_t + e_(2,t)
+$<eq:2.3_2d_ssm>
+
+with:
+- $u_t = [T_(a \, t) \, Phi_(s \, t) \, Phi_(I \, t)]^tack.b in bb(R)^(1 times 3)$
+- $A in bb(R)^(2 times 2) \, B in bb(R)^(2 times 3) \, C in bb(R)^(1 times 2)$
+- $e_(1 \, t) in bb(R)^(2 times 1) \, e_(2 \, t) in bb(R)$ following (multivariate-)normal distributions with mean 0
+- $arrow.r.double bold(X)_t in bb(R)^(2 times 1)$
+
+For the fitting, the following inital values were chosen:
+
+$
+  X_0 = [20, 20]^T \
+  Sigma_(t+1 | t)^(x x)=10.0 \
+  A=mat(
+    0.8, 0.1;
+    0.0, 0.7;
+  )\
+  B=mat(
+    -0.1, 0.1, 0.1;
+    0.0, -0.1, 0.0;
+  )\ 
+  c=mat(
+    1.0, 0.2;
+  )\
+  sigma_1^2=log(2) quad sigma_2^2=log(2)
+$<eq2.3_initial_values_2d>
+
+subject to the following constraints: All entries of $A, B, C$ were constrained in the interval $[-2,2]$, while $sigma_1^2 \, sigma_2^2$, the variances of $e_(1 \, t) \, e_(2 \, t)$ were constrained in $[1e-3, 2]$.
+
+These values were again chosen somewhat arbitrarily, within the ranges of the hint given in the assignment. It shall be noted, that we could achieve significantly better results, by fitting multiple times and taking the last estimated parameters as new initialisation for the next fitting.
+However, we decided to only have one run with intentionally 'worse' initial values, to also get an impression of the performance of the fitting procedure itself.
+
+After fitting, we have the following estimated parameters, rounded to the 4th decimal digit:
+
+$
+  A=mat(
+    -0.8303, -0.3605;
+    0.6865, 0.9543;
+  )\
+  B=mat(
+    -1.7612, 1.741, -1.1408;
+    0.9138, -0.4893, 0.8132;
+  )\ 
+  c=mat(
+    0.264, 0.6254;
+  )\
+  sigma_1^2=0.001 quad sigma_2^2=0.001
+$<eq:2.3_2d_parameter_estimates>
+
+Again, the variances of the noise are pushed to the lower boundary. 
+We did initially to estimate the initial state $X_0$, however, even with constraints in the optimiser, the overall model yielded worse results. Yet the initial value estimates always hovered $approx [20, 20] = X_0$, therefore we deemed it a qualified guess.
+
+#figure(
+  image(
+    "output/2_3_os_pred_2d_vs_1d.png",
+  ),
+  caption: [one-step predictions $hat(Y)_t$ of both models @eq:2.2_1d_ssm and @eq:2.3_2d_ssm],
+) <fig:2.3_os_pred_2d_vs_1d>
+
+In @fig:2.3_os_pred_2d_vs_1d we first look at the one-step predictions and compare the 2D to the 1D model. Visually, the performance seems approximately on par; both having significant difficulties capturing the dynamics for cloud-cover conditions and somewhat difficulties capturing peaks (both models over- and under-shooting at different peaks).
+
+We report the information criteria statistics as $text("AIC")=499.23 \, text("BIC")=542.97$, which indicates that the 2D model does not perform significantly better. Because it is still the case, that AIC penalizes model complexity more heavily here (with $p=14$), we can even argue that the 2D model performs slightly worse than the 1D model, compared with its complexity.
+
+Thus, we turn to the residual analysis in @fig:2.3_residual_diagnostics_2d. This follows the above assumptions, that the model does not perform significantly worse or better. We still cannot diagnose a systematic error of the 2D SSM, as the residuals appear approximately normally distributed.
+Despite, one thing to note is that from the top plot we can see a weak trend, that the model tends to change from under-shooting to over-shooting the true $Y_t$.
+This is confirmed in the ACF, as $rho$ is not alternating as strongly as in the 1D model. The PACF suggests that there is not enough information to diagnose a systematic trend in residuals (yet).
+
+#figure(
+  image(
+    "output/2_3_residual_diagnostics_2d.png",
+  ),
+  caption: [residual $hat(y)_t - Y_t$ of true temperature and the output prediction of our @eq:2.3_2d_ssm model, based on the parameters @eq:2.3_2d_parameter_estimates],
+) <fig:2.3_residual_diagnostics_2d>
+
+The lack of performance difference between the 1D hidden-state model and the 2D hidden-state model, may suggest, that there is either no significant value addition in a 2nd hidden-state, hence, $X_(t,0)$ and $X_(t,1)$ would strongly correlate. There could also be a notion of inverse or counter-acting relationship between the two hidden-states, that nulls out or corrects any information gain of the additional second state compared to only one state.
+We delve deeper in the next section...
+
+
+== 2D state interpretation & discussion <sec:2_4_2d_state_interpretation>
+
+
+
 #bibliography("report.bib")
