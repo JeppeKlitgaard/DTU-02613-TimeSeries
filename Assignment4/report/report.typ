@@ -2,6 +2,7 @@
 #import "@preview/codly:1.2.0": *
 #import "@preview/codly-languages:0.1.1": *
 #import "utils.typ": mathformatter, mref
+#import "@preview/wrap-it:0.1.1":wrap-content
 
 #set page(
   paper: "a4",
@@ -84,7 +85,7 @@ This is done using Python and NumPy, with the relevant coding being found in `1.
 ) <fig:1.1>
 
 The 5 independent realisations of the state as given by @eq:1.1 can be seen in @fig:1.1. Note that
-we show the state vector $X_t$ as opposed to the observation vector $Y_t$. While the assignment is somewhat ambiguous regarding whether the desired realisations are those of the state vector or the observation vector, we reasonably assume it to be the state vector given that the parameter $σ_2$ which is required to generate the observation vector is not given..
+we show the state vector $X_t$ as opposed to the observation vector $Y_t$. While the assignment is somewhat ambiguous regarding whether the desired realisations are those of the state vector or the observation vector, we reasonably assume it to be the state vector given that the parameter $σ_2$ which is required to generate the observation vector is not given.
 
 == Realisation of Observation Vector <sec:1.2>
 
@@ -338,7 +339,7 @@ We are given a dataset with 168 observations as dependent variable $Y_t$ and 3 e
 #figure(
   image(
     "output/2_1_exo_y_plot.png",
-    height: 80%
+    width: 103%
   ),
   caption: [Given observation $Y_t$ and exogenous variables $T_(a \, t), Phi_(s \, t), Phi_(I \, t)$],
 ) <fig:2.1_exo_y_plot>
@@ -348,9 +349,11 @@ displays a wiggle, which suggests some sort of load controller or a load maximum
 
 Intuitively, we would expect the solar radiation to lead and load to lag. The $Y_t$ temperature follows $Phi_(s \, t)$ showing some cool-down period, once solar radiation dropped, hence a slower decay in temperature. Outdoor temperature $T_(a \, t)$ not only follows the solar radiation, hence daily 24h seasonality, but also exhibits a longer period seasonality, which could be climate and wheather effects.
 
+/*
 Overall, we can actually deduce a lot from just outdoor temperature and solar radiation cycles, especially the uninterrupted (unclouded) ones. When inspecting the graph, we can deduce about 17h of daylight, which excludes locations betwee $approx plus.minus 54$ degrees N/S.
 In the southern-hemisphere there is only \'Tierra de Fuego\' the southern cape of Latin America that is still land-mass, but it does not match the temperature profile (as even in summer, for the long daylight hours, it has max. temperatures of about 8 degrees Celsius). One could possible match the outdoor temperature with weather data to deduce a more
 accurate location.
+*/
 
 
 == 1D state-space model <sec:2_2_1D_SSM>
@@ -362,11 +365,13 @@ $
   Y_t = c X_t + e_(2,t)
 $<eq:2.2_1d_ssm>
 
-with:
-- $u_t = [T_(a \, t) \, Phi_(s \, t) \, Phi_(I \, t)]^tack.b in bb(R)^(1 times 3)$
-- $a in bb(R) \, B in bb(R)^(1 times 3) \, c in bb(R)$
-- $e_(1 \, t) in bb(R) \, e_(2 \, t) in bb(R)$
-- $arrow.r.double X_t in bb(R)$
+with 
+$
+  u_t = [T_(a \, t) \, Phi_(s \, t) \, Phi_(I \, t)]^tack.b in bb(R)^(1 times 3); quad
+  a in bb(R) \, B in bb(R)^(1 times 3) \, c in bb(R); quad
+  e_(1 \, t) in bb(R) \, e_(2 \, t) in bb(R); quad
+  X_t in bb(R)
+$
 
 For the fitting, the following contraints were set: The inital value for the hidden-state value was chosen at $X_0 = 20$ and $Sigma_(t+1 | t)^(x x)=1.0$, the parameters were initialized as $a=0.8 \, B=[0.05, 0.1, 0.1]^T \, c=1, sigma_1^2=log(2), sigma_2^2=log(2)$.
 All entries of $a, B, c$ were constrained in the interval $[-2,2]$, while $sigma_1^2 \, sigma_2^2$, the variances of $e_(1 \, t) \, e_(2 \, t)$ were constrained in $[1e-3, log(10)]$.
@@ -377,7 +382,7 @@ We fitted the model analogously to the framework introduced in @eq:1.3_Kalman_fi
 The resulting estimated parameters rounded to the 4th decimal digit are:
 
 $
-  a = 0.7906 \, B=[0.1313 \, 0.0031 \, 0.2524]^T \, c=0.8863 \, sigma_1 = 1e-3 \, sigma_2 = 1e-3
+  a = 0.7906; quad B=[0.1313 \, 0.0031 \, 0.2524]^T; quad c=0.8863; quad sigma_1 = 1e-3; quad sigma_2 = 1e-3
 $ <eq:2.2_parameter_estimates>
 
 It was notable, that the variances $sigma_1^2 \, sigma_2^2$ were always pushed to the lower boundary of the given contraint, no matter the initialization. This could imply, that the model can explain the observations $Y_t$ very well without added noise, or that the noise in the system is not of additive nature.
@@ -417,25 +422,27 @@ $
   Y_t = C X_t + e_(2,t)
 $<eq:2.3_2d_ssm>
 
-with:
-- $u_t = [T_(a \, t) \, Phi_(s \, t) \, Phi_(I \, t)]^tack.b in bb(R)^(1 times 3)$
-- $A in bb(R)^(2 times 2) \, B in bb(R)^(2 times 3) \, C in bb(R)^(1 times 2)$
-- $e_(1 \, t) in bb(R)^(2 times 1) \, e_(2 \, t) in bb(R)$ following (multivariate-)normal distributions with mean 0
-- $arrow.r.double bold(X)_t in bb(R)^(2 times 1)$
+with
+$
+  u_t = [T_(a \, t) \, Phi_(s \, t) \, Phi_(I \, t)]^tack.b in bb(R)^(1 times 3); quad
+  A in bb(R)^(2 times 2) \, B in bb(R)^(2 times 3) \, C in bb(R)^(1 times 2); quad
+  e_(1 \, t) in bb(R)^(2 times 1) \, e_(2 \, t) in bb(R); quad 
+  bold(X)_t in bb(R)^(2 times 1)
+$
+both noise terms $e_t$ following (multivariate-)normal distributions with mean $0$.
 
 For the fitting, the following inital values were chosen:
-
 $
-  X_0 = [20, 20]^T \
+  X_0 = [20, 20]^T quad
   Sigma_(t+1 | t)^(x x)=10.0 \
   A=mat(
     0.8, 0.1;
     0.0, 0.7;
-  )\
+  ) quad
   B=mat(
     -0.1, 0.1, 0.1;
     0.0, -0.1, 0.0;
-  )\
+  ) quad
   c=mat(
     1.0, 0.2;
   )\
@@ -453,14 +460,14 @@ $
   A=mat(
     -0.8303, -0.3605;
     0.6865, 0.9543;
-  )\
+  ) quad
   B=mat(
     -1.7612, 1.741, -1.1408;
     0.9138, -0.4893, 0.8132;
   )\
   c=mat(
     0.264, 0.6254;
-  )\
+  ) quad
   sigma_1^2=0.001 quad sigma_2^2=0.001
 $<eq:2.3_2d_parameter_estimates>
 
@@ -508,16 +515,21 @@ We start with a visual analysis of the hidden states $bold(X_t)$ in @fig:2.4_hid
 By construction, the hidden states are leading the observations in signal response (in upper graph). The value ranges for $X_t$ are not quite insightful, as they can easily be absorbed by the magnitude of coefficients in $A$. Yet, the opposing nature suggests that one state is 'buffering' the other.
 In the bottom graph of @fig:2.4_hidden_states_exo, we only plot one state, as already deduced that there is not much additional informational value in the second state. 
 Overall, we know that, in principle, the hidden state is just a weighted sum (because it is a linear combination) of the exogenous variables. We can see that $X_(t,0)$ is most closely followed by $Phi_(t,s)$ (which can be seen in @fig:2.4_correlation_heatmap), which suggests the highest weight/coefficient assigned. 
-The heatmap @fig:2.4_correlation_heatmap also shows, that even the exogenous variables in $u_t$ have high statistical correlation among themselves. This further supports the conclusion, that estimated parameters will favour one variable, as the others do not add much information to the model.
 
-#figure(
+#let fig = [#figure(
   image(
     "output/2_4_correlation_heatmap.png",
+    width: 100%
   ),
   caption: [correlation coefficient heatmap],
-) <fig:2.4_correlation_heatmap>
+) <fig:2.4_correlation_heatmap>]
 
-We follow with an analysis of the estimated coefficients: As mentioned above, we can interpret the coefficients in $B$ as weights for the sum-composition of $u_t$ for each state. The sign between the first and second row of $B$ are flipped (c.f. @eq:2.3_2d_parameter_estimates), explaining the opposing behaviour and the 'buffering/dampening' nature. We can see in the top graph of @fig:2.4_stepwise_coeff_states, that this weighted sum is somewhere in between the total sum and the average of all exogenous variables in $u_t$ combined. 
+#wrap-content(fig, [
+  The heatmap @fig:2.4_correlation_heatmap also shows, that even the exogenous variables in $u_t$ have high statistical correlation among themselves. This further supports the conclusion, that estimated parameters will favour one variable, as the others do not add much information to the model.
+
+  We follow with an analysis of the estimated coefficients: As mentioned above, we can interpret the coefficients in $B$ as weights for the sum-composition of $u_t$ for each state. The sign between the first and second row of $B$ are flipped (c.f. @eq:2.3_2d_parameter_estimates), explaining the opposing behaviour and the 'buffering/dampening' nature. We can see in the top graph of @fig:2.4_stepwise_coeff_states, that this weighted sum is somewhere in between the total sum and the average of all exogenous variables in $u_t$ combined. 
+])
+  
 The highest weights are both in column 1 of $B$, the weights for $T_(t,a)$. This is likely due to the extremely different magnitude of the exogenous variables, where $T_(t,a)$ has the smalles values, so it needs to be boosted to even compete with the other exogenous variables in the weighted sum. Additionally, $T_(t,a)$ has the lowest correlation (c.f. @fig:2.4_correlation_heatmap) with any of the other exogenous variables (or states), so it provides the most uncovered information.
 
 $A$ acts as the recursive state factor, also allowing for further dampening of the high magnitude of the states $bold(X)_t$. This matrix parameter is responsible for convergence and stability of the entire SSM (c.f. @sec:2.4_1_stability).
