@@ -40,7 +40,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #align(center, text(17pt)[
-  *02417 Times Series Analysis - Assignment 3*
+  *02417 Times Series Analysis - Assignment 4*
 ])
 
 Authors:
@@ -271,6 +271,8 @@ described by @eq:1.5 by simulating realisations of the process with varying degr
   caption: [Observations $Y_t$ of the processes given by @eq:1.5 with t-distributed process noise. Parameters are $A = 0.9, B = 1, σ_1^2 = 1, σ_2^2 = 1$ and $X_0 = 5$],
 ) <fig:1.5_observations>
 
+
+#pagebreak()
 = Modelling a Transformer Station <sec:2>
 
 In this section, we will be using simple state-space models (SSMs) to gain insights into the temperature of an electrical transformer station. 
@@ -281,6 +283,7 @@ We are given a dataset with 168 observations as dependent variable $Y_t$ and 3 e
 #figure(
   image(
     "output/2_1_exo_y_plot.png",
+    height: 80%
   ),
   caption: [Given observation $Y_t$ and exogenous variables $T_(a \, t), Phi_(s \, t), Phi_(I \, t)$],
 ) <fig:2.1_exo_y_plot>
@@ -300,9 +303,9 @@ accurate location.
 The goal here is to fit (estimate the parameters) of the following model via the Kalman-Filter and MLE:
 
 $
-  X\_{t+1} = a X\_t + B u\_t + e\_{1,t} \\\\
-  Y\_t = c X\_t + e\_{2,t}
-$ <eq:2.2_1d_ssm>
+  X_(t+1) = a X_t + B u_t + e_(1,t) \
+  Y_t = c X_t + e_(2,t)
+$<eq:2.2_1d_ssm>
 
 with:
 - $u_t = [T_(a \, t) \, Phi_(s \, t) \, Phi_(I \, t)]^tack.b in bb(R)^(1 times 3)$
@@ -318,9 +321,9 @@ These values were chosen somewhat arbitrarily (based on what worked well) within
 We fitted the model analogously to the framework introduced in @eq:1.3_Kalman_filter and @eq:1.4_implicit_Kalman_likelihood (for which the code can be found in the attached `2.ipynb` file). The Kalman-Filter provided predictions for the hidden-state, which where the basis for our negative log-likelihood to minimize.
 The resulting estimated parameters rounded to the 4th decimal digit are:
 
-$$
+$
   a = 0.7906 \, B=[0.1313 \, 0.0031 \, 0.2524]^T \, c=0.8863 \, sigma_1 = 1e-3 \, sigma_2 = 1e-3
-$$ <eq:2.2_parameter_estimates>
+$ <eq:2.2_parameter_estimates>
 
 It was notable, that the variances $sigma_1^2 \, sigma_2^2$ were always pushed to the lower boundary of the given contraint, no matter the initialization. This could imply, that the model can explain the observations $Y_t$ very well without added noise, or that the noise in the system is not of additive nature.
 
@@ -342,9 +345,9 @@ Looking at the residuals (in this case equivalent to the 'innovation') in @fig:2
   caption: [residual $hat(y)_t - Y_t$ of true temperature and the output prediction of our @eq:2.2_1d_ssm model, based on the parameters @eq:2.2_parameter_estimates],
 ) <fig:2.2_residual_diagnostics>
 
-Beyond, we report the AIC and BIC as model selection criteria with $text("AIC")=495.15, text("BIC")=517.02$. In this setting, the BIC 'advantage' of penalizing model complexity heavier than AIC already kicks-in, since with $p=7, n=168 arrow.r.double 2p < log(n)p$.
+Beyond, we report the AIC and BIC as model selection criteria with $text("AIC")=495.15, text("BIC")=517.02$. In this setting, the BIC 'advantage' of penalizing model complexity heavier than AIC has not kicked-in yet, since with $p=7, n=168 arrow.r.double 2p > log(n)p$.
 
-
+FILL IN
 – Are there periods where the model performs poorly (e.g., daytime peaks)?
 – What do the estimated parameters tell you about the influence of load, solar radiation,
 and outdoor temperature?
